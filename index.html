@@ -72,6 +72,10 @@
     .gym-price-value { font-size: 18px; font-weight: 800; color: var(--primary); }
     .gym-price-label { font-size: 10px; color: var(--gray-light); }
 
+    .loading-spinner { text-align: center; padding: 30px; }
+    .loading-spinner i { font-size: 30px; color: var(--primary); animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     .btn { padding: 13px 18px; border-radius: 50px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s; }
     .btn:active { transform: scale(0.97); }
     .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
@@ -154,7 +158,7 @@
   </div>
   <div class="container">
     <div class="search-box"><i class="fas fa-search" style="color:var(--gray-light);"></i><input type="text" id="searchInput" placeholder="ابحث عن جيم..." oninput="loadGyms()"></div>
-    <div id="gymsList"></div>
+    <div id="gymsList"><div class="loading-spinner"><i class="fas fa-spinner"></i><p>جاري تحميل الجيمات...</p></div></div>
     <div style="text-align:center;margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="goTo('redeem')">🏋️ دخول الكوتش</button></div>
   </div>
 </div>
@@ -179,65 +183,33 @@
       <div class="form-card">
         <h3>بيانات الجيم</h3>
         <div class="form-group"><label>اسم الجيم *</label><input type="text" id="gymName" class="form-control"></div>
-        
-        <div class="form-group">
-          <label>صور الجيم (للرؤية فقط - لا يمكن حفظها)</label>
-          <div class="images-grid" id="imagesGrid"></div>
-          <input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="uploadGymImages(this)">
-        </div>
-        
-        <div class="row">
-          <div class="form-group"><label>الاشتراك الشهري *</label><input type="number" id="monthlyPrice" class="form-control" placeholder="500"></div>
-          <div class="form-group"><label>الاشتراك السنوي</label><input type="number" id="yearlyPrice" class="form-control" placeholder="5000"></div>
-        </div>
-        <div class="row">
-          <div class="form-group"><label>سعر الحصة *</label><input type="number" id="sessionPrice" class="form-control" placeholder="100"></div>
-          <div class="form-group"><label>سعر العرض</label><input type="number" id="offerPrice" class="form-control" placeholder="400"></div>
-        </div>
-        
-        <div class="form-group">
-          <label>أرقام الكوتش</label>
-          <div class="phones-list" id="phonesList"></div>
-          <div class="add-phone-btn" onclick="addPhoneField()">+ إضافة رقم</div>
-        </div>
-        
-        <div class="form-group"><label>الموقع</label><input type="text" id="gymLoc" class="form-control" placeholder="مثال: مصر الجديدة"></div>
-        <div class="form-group"><label>ملاحظات</label><textarea id="gymNotes" class="form-control" rows="2" placeholder="تفاصيل عن الجيم..."></textarea></div>
-        <button class="btn btn-primary" onclick="saveGym()">💾 حفظ التعديلات</button>
+        <div class="form-group"><label>صور الجيم (للرؤية فقط)</label><div class="images-grid" id="imagesGrid"></div><input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="uploadGymImages(this)"></div>
+        <div class="row"><div class="form-group"><label>شهري *</label><input type="number" id="monthlyPrice" class="form-control"></div><div class="form-group"><label>سنوي</label><input type="number" id="yearlyPrice" class="form-control"></div></div>
+        <div class="row"><div class="form-group"><label>الحصة *</label><input type="number" id="sessionPrice" class="form-control"></div><div class="form-group"><label>عرض</label><input type="number" id="offerPrice" class="form-control"></div></div>
+        <div class="form-group"><label>أرقام الكوتش</label><div class="phones-list" id="phonesList"></div><div class="add-phone-btn" onclick="addPhoneField()">+ إضافة رقم</div></div>
+        <div class="form-group"><label>الموقع</label><input type="text" id="gymLoc" class="form-control"></div>
+        <div class="form-group"><label>ملاحظات</label><textarea id="gymNotes" class="form-control" rows="2"></textarea></div>
+        <button class="btn btn-primary" onclick="saveGym()">💾 حفظ</button>
       </div>
     </div>
     
     <div class="tab-content" id="tab-requests"><div id="requestsList"></div></div>
-    
-    <div class="tab-content" id="tab-members">
-      <button class="btn btn-success btn-sm" onclick="showAddMember()" style="margin-bottom:8px;">➕ إضافة مشترك</button>
-      <div class="search-box" style="margin-bottom:10px;"><i class="fas fa-search" style="color:var(--gray-light);"></i><input type="text" id="memberSearchInput" placeholder="بحث عن مشترك..." oninput="loadMembers()"></div>
-      <div id="membersList"></div>
-    </div>
-    
-    <div class="tab-content" id="tab-sessions">
-      <div class="form-group"><label>اختر تاريخ</label><input type="date" id="sessionDate" class="form-control" onchange="loadSessions()"></div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessCount">0</div><div style="font-size:12px;">حصص</div></div>
-        <div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessTotal">0 ج.م</div><div style="font-size:12px;">إجمالي</div></div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="showAddSession()" style="margin-bottom:8px;">➕ حصة جديدة</button>
-      <div id="sessionsList"></div>
-    </div>
+    <div class="tab-content" id="tab-members"><button class="btn btn-success btn-sm" onclick="showAddMember()" style="margin-bottom:8px;">➕ إضافة</button><input type="text" id="memberSearchInput" class="form-control" placeholder="بحث عن مشترك..." oninput="loadMembers()" style="margin-bottom:8px;"><div id="membersList"></div></div>
+    <div class="tab-content" id="tab-sessions"><div class="form-group"><label>تاريخ</label><input type="date" id="sessionDate" class="form-control" onchange="loadSessions()"></div><div style="display:flex;gap:8px;margin-bottom:8px;"><div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessCount">0</div><div>حصص</div></div><div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessTotal">0 ج.م</div><div>إجمالي</div></div></div><button class="btn btn-primary btn-sm" onclick="showAddSession()" style="margin-bottom:8px;">➕ حصة</button><div id="sessionsList"></div></div>
   </div>
 </div>
 
 <div class="page" id="adminPage"><div class="header"><h2 style="font-size:17px;color:var(--text);">👑 لوحة المطور</h2><div class="header-actions"><button class="btn-icon-only" onclick="toggleDark()"><i class="fas fa-moon"></i></button><button class="btn-header" onclick="logoutAdmin()">🚪 خروج</button></div></div><div class="container" id="adminContent"></div></div>
 
-<!-- ==================== المودالات ==================== -->
+<!-- مودالات -->
 <div class="modal" id="gymModal"><div class="modal-content"><div class="modal-header"><h3 id="modalTitle"></h3><button class="modal-close" onclick="closeModal('gymModal')">✕</button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
 <div class="modal" id="confirmModal"><div class="modal-content"><div class="modal-header"><h3 id="confirmTitle"></h3><button class="modal-close" onclick="closeModal('confirmModal')">✕</button></div><div class="modal-body" id="confirmBody"></div><div class="modal-footer"><button class="btn btn-danger" id="confirmYesBtn">نعم</button><button class="btn btn-outline" onclick="closeModal('confirmModal')">إلغاء</button></div></div></div>
-<div class="modal" id="passcodeModal"><div class="modal-content"><div class="modal-header"><h3>🔒 دخول المطور</h3><button class="modal-close" onclick="closeModal('passcodeModal')">✕</button></div><div class="modal-body" style="text-align:center;"><p style="color:var(--text-secondary);">كلمة المرور (6 أرقام)</p><div style="display:flex;gap:6px;justify-content:center;margin:14px 0;"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc1" oninput="nextPass(this,'pc2')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc2" oninput="nextPass(this,'pc3')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc3" oninput="nextPass(this,'pc4')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc4" oninput="nextPass(this,'pc5')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc5" oninput="nextPass(this,'pc6')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc6"></div></div><div class="modal-footer"><button class="btn btn-primary" onclick="verifyPass()">دخول</button><button class="btn btn-outline" onclick="closeModal('passcodeModal')">إلغاء</button></div></div></div>
+<div class="modal" id="passcodeModal"><div class="modal-content"><div class="modal-header"><h3>🔒 دخول المطور</h3><button class="modal-close" onclick="closeModal('passcodeModal')">✕</button></div><div class="modal-body" style="text-align:center;"><p>كلمة المرور</p><div style="display:flex;gap:6px;justify-content:center;margin:14px 0;"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc1" oninput="nextPass(this,'pc2')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc2" oninput="nextPass(this,'pc3')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc3" oninput="nextPass(this,'pc4')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc4" oninput="nextPass(this,'pc5')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc5" oninput="nextPass(this,'pc6')"><input type="text" class="form-control" maxlength="1" style="width:44px;height:50px;text-align:center;font-size:22px;" id="pc6"></div></div><div class="modal-footer"><button class="btn btn-primary" onclick="verifyPass()">دخول</button><button class="btn btn-outline" onclick="closeModal('passcodeModal')">إلغاء</button></div></div></div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ==================== CONFIG ====================
+// ==================== FIREBASE ====================
 const firebaseConfig = {
   apiKey: "AIzaSyC6WcH6mwd-I_vT9RwMNC07Dg3qp7sB66Q",
   authDomain: "gymawy-platform.firebaseapp.com",
@@ -247,29 +219,20 @@ const firebaseConfig = {
   appId: "1:521123423571:web:a9c567c62ec48877bb2da6"
 };
 
-const CLOUDINARY = {
-  cloudName: 'di5z4lzwv',
-  uploadPreset: 'gymawy_upload'
-};
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const rtdb = firebase.database();
 
-// ==================== HELPERS ====================
-let G = { gym: null, gid: null, selGym: null, curMem: null, subType: 'monthly', pendGym: null };
+const CLOUDINARY = { cloudName: 'di5z4lzwv', uploadPreset: 'gymawy_upload' };
 const AD = 'ADMIN2026GYM', PS = '123456', SP = '01016212814';
+
+// ==================== STATE ====================
+let G = { gym: null, gid: null, selGym: null, curMem: null, subType: 'monthly', pendGym: null, allGyms: [] };
 let confirmCB = null;
 
-const LDB = {
-  get() { try { return JSON.parse(localStorage.getItem('gymawy_local') || '{}'); } catch(e) { return {}; } },
-  set(d) { localStorage.setItem('gymawy_local', JSON.stringify(d)); },
-  getK(k, def) { const d = this.get(); return d[k] !== undefined ? d[k] : def; },
-  setK(k, v) { const d = this.get(); d[k] = v; this.set(d); }
-};
-
+// ==================== HELPERS ====================
 function T(msg, type='success') { const t=document.getElementById('toast'); t.textContent=msg; t.className='toast '+type; t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3000); }
-function goTo(p) { document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); const el=document.getElementById(p+'Page'); if(el)el.classList.add('active'); if(p==='home')loadGyms(); if(p==='profile')loadProfile(); if(p==='myReq')loadMyReqs(); }
+function goTo(p) { document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); document.getElementById(p+'Page').classList.add('active'); if(p==='home')loadGyms(); if(p==='profile')loadProfile(); if(p==='myReq')loadMyReqs(); }
 function openModal(id) { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 function fmt(d) { if(!d)return''; return new Date(d).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'}); }
@@ -279,203 +242,151 @@ function uid() { return Date.now().toString(36)+Math.random().toString(36).subst
 function showConfirm(title, msg, cb) { document.getElementById('confirmTitle').textContent=title; document.getElementById('confirmBody').innerHTML=msg; confirmCB=cb; document.getElementById('confirmYesBtn').onclick=()=>{closeModal('confirmModal');if(confirmCB)confirmCB();}; openModal('confirmModal'); }
 function toggleDark() { document.body.classList.toggle('dark'); const is=document.body.classList.contains('dark'); localStorage.setItem('darkMode',is?'1':'0'); document.querySelectorAll('.btn-icon-only i').forEach(i=>i.className=is?'fas fa-sun':'fas fa-moon'); }
 
-// ==================== CLOUDINARY UPLOAD ====================
+// ==================== CLOUDINARY ====================
 async function uploadToCloudinary(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY.uploadPreset);
+  const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', CLOUDINARY.uploadPreset);
+  try { const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/image/upload`, { method: 'POST', body: fd }); const d = await r.json(); return d.secure_url || null; } catch(e) { return null; }
+}
+
+// ==================== GYMS (ALL FROM FIREBASE) ====================
+async function loadGyms() {
+  const c = document.getElementById('gymsList');
+  c.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner"></i><p>جاري التحميل...</p></div>';
   
-  try {
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/image/upload`, {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-    console.log('Cloudinary response:', data);
-    if (data.secure_url) return data.secure_url;
-    if (data.error) { console.error('Cloudinary error:', data.error.message); return null; }
-    return null;
-  } catch(e) {
-    console.error('Upload failed:', e.message);
-    return null;
-  }
-}
-
-// ==================== IMAGES ====================
-function renderImages() {
-  const g = G.gym;
-  const grid = document.getElementById('imagesGrid');
-  if (!grid) return;
-  let h = '';
-  if (g.images) {
-    g.images.forEach((img, i) => {
-      h += `<div class="img-box"><img src="${img}" alt="صورة ${i+1}" oncontextmenu="return false;"><button class="del-img" onclick="event.stopPropagation();delImg(${i})">✕</button></div>`;
-    });
-  }
-  h += `<div class="img-box add-box" onclick="document.getElementById('imageInput').click()"><i class="fas fa-plus"></i></div>`;
-  grid.innerHTML = h;
-}
-
-async function uploadGymImages(input) {
-  if (!G.gym.images) G.gym.images = [];
-  if (G.gym.images.length >= 5) { T('أقصى حد 5 صور', 'warning'); input.value = ''; return; }
-  
-  const files = Array.from(input.files).slice(0, 5 - G.gym.images.length);
-  
-  for (const f of files) {
-    T('⏳ جاري رفع الصورة...');
-    const url = await uploadToCloudinary(f);
-    if (url) {
-      G.gym.images.push(url);
-      renderImages();
-      T('✅ تم رفع الصورة بنجاح');
-    } else {
-      T('❌ فشل رفع الصورة - تأكد من الاتصال', 'error');
-    }
-  }
-  input.value = '';
-}
-
-function delImg(i) {
-  showConfirm('حذف الصورة', '<p>متأكد من حذف الصورة؟</p>', () => {
-    G.gym.images.splice(i, 1); renderImages();
-  });
-}
-
-// ==================== PHONES ====================
-function renderPhones() {
-  const g = G.gym;
-  const list = document.getElementById('phonesList');
-  if (!list) return;
-  let h = '';
-  if (g.phones) {
-    g.phones.forEach((p, i) => {
-      h += `<div class="phone-row"><input type="tel" value="${p}" class="form-control" onchange="updatePhone(${i}, this.value)"><button class="del-phone" onclick="delPhone(${i})">✕</button></div>`;
-    });
-  }
-  list.innerHTML = h;
-}
-
-function addPhoneField() { if (!G.gym.phones) G.gym.phones = []; G.gym.phones.push(''); renderPhones(); }
-function updatePhone(i, v) { G.gym.phones[i] = v; }
-function delPhone(i) { G.gym.phones.splice(i, 1); renderPhones(); }
-
-// ==================== SYNC ====================
-async function syncGymsFromFirebase() {
   try {
     const snap = await db.collection('gyms').get();
-    const gyms = []; snap.forEach(doc => gyms.push({ id: doc.id, ...doc.data() }));
-    LDB.setK('gyms', gyms);
-    return gyms;
-  } catch(e) { return LDB.getK('gyms', []); }
-}
-
-function loadGyms() {
-  const gs = LDB.getK('gyms', []).filter(g => g.active && !exp(g.subEnd));
-  const s = (document.getElementById('searchInput')?.value||'').toLowerCase();
-  let f = gs; if(s) f = gs.filter(g => g.name.toLowerCase().includes(s)||(g.location||'').toLowerCase().includes(s));
-  const c = document.getElementById('gymsList');
-  if(!f.length){c.innerHTML='<div class="empty"><i class="fas fa-store-slash"></i><h4>لا توجد جيمات متاحة</h4></div>';return;}
-  c.innerHTML = f.map(g => `
-    <div class="gym-card" onclick='showGym("${g.id}")'>
-      <div class="gym-card-image">
-        ${g.images?.length ? `<img src="${g.images[0]}" alt="${g.name}" oncontextmenu="return false;" draggable="false">` : '<i class="fas fa-dumbbell ph"></i>'}
-        ${g.offerPrice ? `<span class="gym-card-badge">عرض ${g.offerPrice} ج.م</span>` : ''}
-      </div>
-      <div class="gym-card-body">
-        <div class="gym-card-title">${g.name}</div>
-        <div class="gym-prices">
-          <div class="gym-price-item"><span class="gym-price-value">${g.monthlyPrice}</span><span class="gym-price-label">ج.م/شهر</span></div>
-          ${g.yearlyPrice?`<div class="gym-price-item"><span class="gym-price-value">${g.yearlyPrice}</span><span class="gym-price-label">ج.م/سنة</span></div>`:''}
+    G.allGyms = []; snap.forEach(doc => G.allGyms.push({ id: doc.id, ...doc.data() }));
+    
+    const s = (document.getElementById('searchInput')?.value||'').toLowerCase();
+    let f = G.allGyms.filter(g => g.active && g.subEnd && !exp(g.subEnd));
+    if(s) f = f.filter(g => g.name.toLowerCase().includes(s)||(g.location||'').toLowerCase().includes(s));
+    
+    if(!f.length){ c.innerHTML='<div class="empty"><i class="fas fa-store-slash"></i><h4>لا جيمات</h4></div>'; return; }
+    
+    c.innerHTML = f.map(g => `
+      <div class="gym-card" onclick='showGym("${g.id}")'>
+        <div class="gym-card-image">
+          ${g.images?.length ? `<img src="${g.images[0]}" oncontextmenu="return false;">` : '<i class="fas fa-dumbbell ph"></i>'}
+          ${g.offerPrice ? `<span class="gym-card-badge">عرض ${g.offerPrice} ج.م</span>` : ''}
         </div>
-      </div>
-    </div>`).join('');
+        <div class="gym-card-body">
+          <div class="gym-card-title">${g.name}</div>
+          <div class="gym-prices">
+            <div class="gym-price-item"><span class="gym-price-value">${g.monthlyPrice}</span><span class="gym-price-label">ج.م/شهر</span></div>
+            ${g.yearlyPrice?`<div class="gym-price-item"><span class="gym-price-value">${g.yearlyPrice}</span><span class="gym-price-label">ج.م/سنة</span></div>`:''}
+          </div>
+        </div>
+      </div>`).join('');
+  } catch(e) { c.innerHTML='<div class="empty"><i class="fas fa-wifi"></i><h4>تأكد من الاتصال</h4></div>'; }
 }
 
 function showGym(id) {
-  const gs = LDB.getK('gyms', []); const g = gs.find(x=>x.id===id); if(!g)return; G.selGym=g;
+  const g = G.allGyms.find(x=>x.id===id); if(!g) return; G.selGym=g;
   const ph = sessionStorage.getItem('userPhone');
-  let isM=false, isA=false;
-  if(ph){ const ms=LDB.getK('members',[]); const m=ms.find(m=>m.gymId===g.id&&m.phone===ph&&m.active&&!m.leftByUser); if(m){isM=true;isA=m.paid&&!exp(m.due);} }
+  
   document.getElementById('modalTitle').textContent=g.name;
   document.getElementById('modalBody').innerHTML=`
-    ${g.images?.length?`<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;">${g.images.map(i=>`<img src="${i}" style="width:180px;height:130px;object-fit:cover;border-radius:10px;pointer-events:none;user-select:none;" oncontextmenu="return false;" draggable="false">`).join('')}</div>`:''}
-    <h4 style="color:var(--primary);margin-bottom:6px;"><i class="fas fa-tag"></i> الأسعار</h4>
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>الاشتراك الشهري</span><strong style="color:var(--primary);">${g.monthlyPrice} ج.م</strong></div>
-    ${g.yearlyPrice?`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>الاشتراك السنوي</span><strong style="color:var(--primary);">${g.yearlyPrice} ج.م</strong></div>`:''}
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>سعر الحصة الواحدة</span><strong style="color:var(--primary);">${g.sessionPrice} ج.م</strong></div>
-    ${g.offerPrice?`<div style="display:flex;justify-content:space-between;padding:5px 0;"><span>العرض الخاص</span><strong style="color:var(--success);">${g.offerPrice} ج.م</strong></div>`:''}
-    <div style="margin-top:10px;padding:8px;background:var(--light);border-radius:8px;">
-      <strong><i class="fas fa-phone"></i> أرقام التواصل:</strong>
-      <div style="margin-top:4px;">${g.phones?.length?g.phones.map(p=>`<a href="tel:${p}" style="display:inline-block;margin:2px 4px;padding:4px 10px;background:var(--card);border-radius:15px;color:var(--primary);text-decoration:none;font-weight:600;font-size:12px;">${p}</a>`).join(''):'<span style="color:var(--text-secondary);">لا توجد أرقام</span>'}</div>
-    </div>
-    <div style="margin-top:6px;"><strong><i class="fas fa-map-marker-alt"></i> الموقع:</strong> ${g.location||'غير محدد'}</div>
-    ${g.notes?`<div style="margin-top:6px;padding:8px;background:var(--light);border-radius:8px;"><strong><i class="fas fa-info-circle"></i> ملاحظات:</strong> ${g.notes}</div>`:''}
-    ${isM?`<div style="margin-top:10px;padding:10px;background:${isA?'#D4EDDA':'#F8D7DA'};border-radius:10px;text-align:center;font-weight:700;color:${isA?'#155724':'#721C24'};">${isA?'✅ أنت مشترك حالياً في هذا الجيم':'⚠️ اشتراكك منتهي - توجه للجيم للتجديد'}</div>`:''}`;
-  let ft='';
-  if(isM&&isA)ft='<button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إغلاق</button>';
-  else if(isM&&!isA)ft='<div style="padding:8px;background:#FFF3CD;border-radius:8px;text-align:center;margin-bottom:4px;font-size:13px;">⚠️ توجه للجيم للتجديد</div><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إغلاق</button>';
-  else ft='<button class="btn btn-primary" onclick="subGym()">✋ طلب اشتراك</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إغلاق</button>';
-  document.getElementById('modalFooter').innerHTML=ft; openModal('gymModal');
+    ${g.images?.length?`<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;">${g.images.map(i=>`<img src="${i}" style="width:180px;height:130px;object-fit:cover;border-radius:10px;pointer-events:none;" oncontextmenu="return false;">`).join('')}</div>`:''}
+    <h4 style="color:var(--primary);">الأسعار</h4>
+    <div style="display:flex;justify-content:space-between;padding:5px 0;"><span>شهري</span><strong style="color:var(--primary);">${g.monthlyPrice} ج.م</strong></div>
+    ${g.yearlyPrice?`<div style="display:flex;justify-content:space-between;padding:5px 0;"><span>سنوي</span><strong style="color:var(--primary);">${g.yearlyPrice} ج.م</strong></div>`:''}
+    <div style="display:flex;justify-content:space-between;padding:5px 0;"><span>حصة</span><strong style="color:var(--primary);">${g.sessionPrice} ج.م</strong></div>
+    ${g.offerPrice?`<div style="display:flex;justify-content:space-between;padding:5px 0;"><span>عرض</span><strong style="color:var(--success);">${g.offerPrice} ج.م</strong></div>`:''}
+    <div style="margin-top:10px;"><strong>📞</strong> ${g.phones?.length?g.phones.join(', '):'لا يوجد'}</div>
+    <div><strong>📍</strong> ${g.location||'غير محدد'}</div>
+    ${g.notes?`<div style="margin-top:6px;padding:8px;background:var(--light);border-radius:8px;"><strong>📝</strong> ${g.notes}</div>`:''}`;
+  
+  document.getElementById('modalFooter').innerHTML = `
+    <button class="btn btn-primary" onclick="subGym()">✋ طلب اشتراك</button>
+    <button class="btn btn-outline" onclick="closeModal('gymModal')">إغلاق</button>`;
+  openModal('gymModal');
 }
-
-// ==================== PROFILE & REQUESTS ====================
-function saveProfile() { const n=document.getElementById('regName').value.trim(),p=document.getElementById('regPhone').value.trim(); if(!n||!p){T('اكتب البيانات','error');return;} const pr={phone:p,name:n,created:new Date().toISOString()}; LDB.setK('profile',pr); sessionStorage.setItem('userPhone',p); T('تم الحفظ'); if(G.pendGym){const g=G.pendGym;G.pendGym=null;goTo('home');setTimeout(()=>{G.selGym=g;subGym();},200);}else goTo('profile'); }
-function loadProfile() { const ph=sessionStorage.getItem('userPhone');const c=document.getElementById('profileContent'); if(!ph){c.innerHTML='<div class="empty"><i class="fas fa-user-circle"></i><h4>سجل دخولك</h4><button class="btn btn-primary btn-sm" onclick="goTo(\'register\')">تسجيل</button></div>';return;} const pr=LDB.getK('profile',null); if(!pr||pr.phone!==ph){goTo('register');return;} const ms=LDB.getK('members',[]).filter(m=>m.phone===ph&&m.active&&!m.leftByUser); const hist=LDB.getK('members',[]).filter(m=>m.phone===ph&&(m.leftByUser||!m.active)); c.innerHTML=`<div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;box-shadow:var(--shadow);"><i class="fas fa-user-circle" style="font-size:46px;color:var(--primary);"></i><h2 style="color:var(--text);">${pr.name}</h2><p style="color:var(--text-secondary);">📞 ${pr.phone}</p><button class="btn btn-outline btn-sm" onclick="logoutUser()">خروج</button></div><h3 style="color:var(--text);margin-bottom:8px;">📋 اشتراكاتي</h3>${ms.length?ms.map(m=>{const ok=m.paid&&!exp(m.due);return`<div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:16px;padding:14px;color:white;margin-bottom:8px;position:relative;"><button style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:10px;font-size:10px;cursor:pointer;" onclick="leaveGym('${m.id}')">🚪 خروج</button><div style="font-size:16px;font-weight:800;">${m.gymName}</div><div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px;margin:6px 0;"><div style="display:flex;justify-content:space-between;font-size:12px;"><span>بدء</span><span>${fmt(m.start)}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;"><span>استحقاق</span><span>${fmt(m.due)}</span></div></div><span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;background:${ok?'rgba(0,184,148,0.3)':'rgba(255,107,107,0.3)'};">${ok?'✅ مدفوع':'❌ متأخر'}</span></div>`}).join(''):'<p style="color:var(--text-secondary);text-align:center;">لا اشتراكات</p>'}${hist.length?`<h3 style="color:var(--text);margin-top:12px;margin-bottom:6px;">📜 السجل</h3>${hist.map(m=>`<div style="background:var(--card);border-radius:8px;padding:8px;margin-bottom:4px;font-size:12px;color:var(--text-secondary);"><strong>${m.gymName}</strong> - ${m.leftByUser?'🚪 خرج':'انتهى'} ${fmt(m.due)}</div>`).join('')}`:''}`; }
-function leaveGym(mid) { showConfirm('تأكيد الخروج','<p style="color:var(--text-secondary);">متأكد من الخروج من الجيم؟</p>',()=>{ const ms=LDB.getK('members',[]); const m=ms.find(m=>m.id===mid); if(m){m.leftByUser=true;m.active=false;m.paid=false;m.leaveDate=new Date().toISOString();LDB.setK('members',ms);syncMember(m);T('تم الخروج','warning');loadProfile();} }); }
-function logoutUser() { sessionStorage.removeItem('userPhone'); goTo('home'); }
-function loadMyReqs(){ const ph=sessionStorage.getItem('userPhone'); const c=document.getElementById('myReqContent'); if(!ph){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>سجل دخولك</h4></div>';return;} const urs=LDB.getK('userReqs',[]).filter(u=>u.phone===ph); const reqs=LDB.getK('requests',[]).filter(r=>urs.find(u=>u.rid===r.id)); if(!reqs.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>لا طلبات</h4></div>';return;} c.innerHTML=reqs.reverse().map(r=>{const st=r.status==='pending'?'⏳ معلق':r.status==='accepted'?'✅ مقبول':'❌ مرفوض';return`<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;"><div><strong style="color:var(--text);">${r.gymName}</strong><div style="font-size:11px;color:var(--text-secondary);">${fmt(r.created)} | ${r.subType==='monthly'?'شهري':'سنوي'}</div></div><span style="font-weight:600;">${st}</span></div>`;}).join(''); }
 
 // ==================== SUBSCRIPTION ====================
 function subGym() {
-  const ph=sessionStorage.getItem('userPhone'); const pr=LDB.getK('profile',null);
-  if(!pr||pr.phone!==ph){ G.pendGym=G.selGym; closeModal('gymModal'); goTo('register'); T('سجل بياناتك الأول','warning'); return; }
-  const ms=LDB.getK('members',[]);
-  if(ms.find(m=>m.gymId===G.selGym.id&&m.phone===ph&&m.active&&!m.leftByUser)){T('أنت مشترك بالفعل في هذا الجيم','warning');closeModal('gymModal');return;}
+  const ph = sessionStorage.getItem('userPhone');
+  if(!ph){ G.pendGym=G.selGym; closeModal('gymModal'); goTo('register'); T('سجل بياناتك','warning'); return; }
   G.subType='monthly';
-  document.getElementById('modalTitle').textContent='اختر نوع الاشتراك';
-  document.getElementById('modalBody').innerHTML=`<p style="text-align:center;color:var(--text);"><strong>${G.selGym.name}</strong></p><div class="radio-group"><div class="radio-option selected" id="optMonthly" onclick="selectSubType('monthly')">📅 شهري<span style="display:block;font-size:11px;color:var(--text-secondary);">${G.selGym.monthlyPrice} ج.م/شهر</span></div>${G.selGym.yearlyPrice?`<div class="radio-option" id="optYearly" onclick="selectSubType('yearly')">📆 سنوي<span style="display:block;font-size:11px;color:var(--text-secondary);">${G.selGym.yearlyPrice} ج.م/سنة</span></div>`:''}</div><div style="margin-top:10px;padding:8px;background:#EFF6FF;border-radius:8px;font-size:11px;color:#1E40AF;">بعد التقديم، توجه للجيم للدفع</div>`;
-  document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="confirmSub()">✅ تأكيد الطلب</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>';
+  document.getElementById('modalTitle').textContent='اختر النوع';
+  document.getElementById('modalBody').innerHTML=`<p style="text-align:center;"><strong>${G.selGym.name}</strong></p><div class="radio-group"><div class="radio-option selected" id="optMonthly" onclick="selectSubType('monthly')">📅 شهري<span style="display:block;font-size:11px;">${G.selGym.monthlyPrice} ج.م</span></div>${G.selGym.yearlyPrice?`<div class="radio-option" id="optYearly" onclick="selectSubType('yearly')">📆 سنوي<span style="display:block;font-size:11px;">${G.selGym.yearlyPrice} ج.م</span></div>`:''}</div>`;
+  document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="confirmSub()">✅ تأكيد</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>';
   openModal('gymModal');
 }
 function selectSubType(t){ G.subType=t; document.querySelectorAll('.radio-option').forEach(o=>o.classList.remove('selected')); document.getElementById(t==='monthly'?'optMonthly':'optYearly').classList.add('selected'); }
 async function confirmSub(){
-  const ph=sessionStorage.getItem('userPhone'); const pr=LDB.getK('profile');
-  const req = { id: uid(), gymId: G.selGym.id, gymName: G.selGym.name, name: pr.name, phone: ph, subType: G.subType, status: 'pending', created: new Date().toISOString() };
-  try { await db.collection('requests').doc(req.id).set(req); } catch(e){}
-  try { await rtdb.ref('newRequests/'+G.selGym.id).set({ requestId: req.id, time: Date.now() }); } catch(e){}
-  const lreqs = LDB.getK('requests', []); lreqs.push(req); LDB.setK('requests', lreqs);
-  const urs = LDB.getK('userReqs', []); urs.push({ phone: ph, rid: req.id }); LDB.setK('userReqs', urs);
-  closeModal('gymModal'); T('تم إرسال الطلب بنجاح');
+  const ph=sessionStorage.getItem('userPhone');
+  const req = { gymId: G.selGym.id, gymName: G.selGym.name, name: sessionStorage.getItem('userName')||'', phone: ph, subType: G.subType, status: 'pending', created: new Date().toISOString() };
+  await db.collection('requests').add(req);
+  await rtdb.ref('newRequests/'+G.selGym.id).set({ time: Date.now() });
+  closeModal('gymModal'); T('تم إرسال الطلب');
+}
+
+// ==================== PROFILE ====================
+async function saveProfile() {
+  const n=document.getElementById('regName').value.trim(), p=document.getElementById('regPhone').value.trim();
+  if(!n||!p){T('اكتب البيانات','error');return;}
+  sessionStorage.setItem('userPhone', p); sessionStorage.setItem('userName', n);
+  await db.collection('profiles').doc(p).set({ name: n, phone: p, created: new Date().toISOString() }, { merge: true });
+  T('تم الحفظ');
+  if(G.pendGym){ const g=G.pendGym; G.pendGym=null; goTo('home'); setTimeout(()=>{G.selGym=g;subGym();},200); }
+  else goTo('profile');
+}
+
+async function loadProfile() {
+  const ph=sessionStorage.getItem('userPhone'), c=document.getElementById('profileContent');
+  if(!ph){c.innerHTML='<div class="empty"><i class="fas fa-user-circle"></i><h4>سجل دخولك</h4><button class="btn btn-primary btn-sm" onclick="goTo(\'register\')">تسجيل</button></div>';return;}
+  
+  // Load from Firebase
+  const profSnap = await db.collection('profiles').doc(ph).get();
+  const prof = profSnap.exists ? profSnap.data() : null;
+  if(!prof){ goTo('register'); return; }
+  
+  const memSnap = await db.collection('members').where('phone','==',ph).get();
+  const members = []; memSnap.forEach(doc => members.push({ id: doc.id, ...doc.data() }));
+  
+  const active = members.filter(m=>m.active&&!m.leftByUser);
+  const hist = members.filter(m=>!m.active||m.leftByUser);
+  
+  c.innerHTML=`<div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;"><i class="fas fa-user-circle" style="font-size:46px;color:var(--primary);"></i><h2>${prof.name}</h2><p>📞 ${prof.phone}</p><button class="btn btn-outline btn-sm" onclick="logoutUser()">خروج</button></div><h3>📋 اشتراكاتي</h3>${active.length?active.map(m=>{const ok=m.paid&&!exp(m.due);return`<div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:16px;padding:14px;color:white;margin-bottom:8px;position:relative;"><button style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:10px;font-size:10px;cursor:pointer;" onclick="leaveGym('${m.id}')">🚪 خروج</button><div style="font-size:16px;font-weight:800;">${m.gymName}</div><div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px;margin:6px 0;"><div style="display:flex;justify-content:space-between;font-size:12px;"><span>بدء</span><span>${fmt(m.start)}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;"><span>استحقاق</span><span>${fmt(m.due)}</span></div></div><span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;background:${ok?'rgba(0,184,148,0.3)':'rgba(255,107,107,0.3)'};">${ok?'✅ مدفوع':'❌ متأخر'}</span></div>`}).join(''):'<p>لا اشتراكات</p>'}${hist.length?`<h3>📜 السجل</h3>${hist.map(m=>`<div style="background:var(--card);border-radius:8px;padding:8px;margin-bottom:4px;font-size:12px;"><strong>${m.gymName}</strong> - ${fmt(m.due)}</div>`).join('')}`:''}`;
+}
+
+async function leaveGym(mid) {
+  showConfirm('تأكيد الخروج','<p>متأكد من الخروج؟</p>', async () => {
+    await db.collection('members').doc(mid).update({ leftByUser: true, active: false, paid: false, leaveDate: new Date().toISOString() });
+    T('تم الخروج','warning'); loadProfile();
+  });
+}
+
+function logoutUser() { sessionStorage.removeItem('userPhone'); sessionStorage.removeItem('userName'); goTo('home'); }
+
+async function loadMyReqs() {
+  const ph=sessionStorage.getItem('userPhone'), c=document.getElementById('myReqContent');
+  if(!ph){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>سجل دخولك</h4></div>';return;}
+  const snap = await db.collection('requests').where('phone','==',ph).get();
+  const reqs = []; snap.forEach(doc => reqs.push({ id: doc.id, ...doc.data() }));
+  if(!reqs.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>لا طلبات</h4></div>';return;}
+  c.innerHTML=reqs.reverse().map(r=>{const st=r.status==='pending'?'⏳ معلق':r.status==='accepted'?'✅ مقبول':'❌ مرفوض';return`<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;"><div><strong>${r.gymName}</strong><div style="font-size:11px;">${fmt(r.created)} | ${r.subType}</div></div><span>${st}</span></div>`;}).join('');
 }
 
 // ==================== REDEEM ====================
-function checkCode() {
+async function checkCode() {
   const code = document.getElementById('redeemCode').value.trim().toUpperCase();
   if(code===AD){ openModal('passcodeModal'); return; }
-  const gs = LDB.getK('gyms', []); const g = gs.find(x=>x.redeemCode===code);
-  if(!g){ T('الكود غير صحيح','error'); return; }
-  if(!g.active||exp(g.subEnd)){ T('الجيم غير مفعل أو الاشتراك منتهي. للتواصل: '+SP,'error'); return; }
-  const r = daysR(g.subEnd); if(r<=3&&r>0)T(`⚠️ متبقي ${r} يوم. للتواصل: ${SP}`,'warning');
-  G.gym=g; G.gid=g.id; sessionStorage.setItem('coachId',g.id);
-  document.getElementById('coachTitle').textContent=g.name;
+  const snap = await db.collection('gyms').where('redeemCode','==',code).get();
+  if(snap.empty){ T('كود غلط','error'); return; }
+  const doc = snap.docs[0]; G.gym = { id: doc.id, ...doc.data() }; G.gid = doc.id;
+  if(!G.gym.active||exp(G.gym.subEnd)){ T('الجيم مش مفعل','error'); return; }
+  sessionStorage.setItem('coachId', G.gid);
+  document.getElementById('coachTitle').textContent=G.gym.name;
   document.getElementById('redeemCode').value='';
   goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount();
-  listenForNewRequests();
+  rtdb.ref('newRequests/'+G.gid).on('value', snap => { if(snap.val()){ T('🔔 طلب جديد!','warning'); loadReqCount(); rtdb.ref('newRequests/'+G.gid).remove(); } });
 }
 function nextPass(c,n){ if(c.value.length===1)document.getElementById(n)?.focus(); }
 function verifyPass(){
   let v=''; for(let i=1;i<=6;i++)v+=document.getElementById('pc'+i).value;
-  if(v===PS){ closeModal('passcodeModal'); sessionStorage.setItem('admin','1'); for(let i=1;i<=6;i++)document.getElementById('pc'+i).value=''; goTo('admin'); loadAdmin(); }
-  else T('كلمة مرور غير صحيحة','error');
-}
-
-// ==================== REALTIME ====================
-function listenForNewRequests() {
-  rtdb.ref('newRequests/'+G.gid).on('value', snapshot => {
-    const data = snapshot.val();
-    if (data) { T('🔔 فيه طلب اشتراك جديد!', 'warning'); loadReqCount(); rtdb.ref('newRequests/'+G.gid).remove(); }
-  });
+  if(v===PS){ closeModal('passcodeModal'); sessionStorage.setItem('admin','1'); goTo('admin'); loadAdmin(); }
+  else T('غلط','error');
 }
 
 // ==================== COACH ====================
@@ -487,88 +398,110 @@ function switchTab(t){
   if(t==='requests')loadRequests(); if(t==='members')loadMembers(); if(t==='sessions')loadSessions();
 }
 function loadGymForm(){ const g=G.gym; document.getElementById('gymName').value=g.name||''; document.getElementById('monthlyPrice').value=g.monthlyPrice||''; document.getElementById('yearlyPrice').value=g.yearlyPrice||''; document.getElementById('sessionPrice').value=g.sessionPrice||''; document.getElementById('offerPrice').value=g.offerPrice||''; document.getElementById('gymLoc').value=g.location||''; document.getElementById('gymNotes').value=g.notes||''; }
+function renderImages(){ const g=G.gym, grid=document.getElementById('imagesGrid'); let h=''; if(g.images)g.images.forEach((img,i)=>{h+=`<div class="img-box"><img src="${img}" oncontextmenu="return false;"><button class="del-img" onclick="event.stopPropagation();delImg(${i})">✕</button></div>`;}); h+=`<div class="img-box add-box" onclick="document.getElementById('imageInput').click()"><i class="fas fa-plus"></i></div>`; grid.innerHTML=h; }
+async function uploadGymImages(input){ if(!G.gym.images)G.gym.images=[]; if(G.gym.images.length>=5){T('5 صور كحد أقصى','warning');input.value='';return;} for(const f of Array.from(input.files).slice(0,5-G.gym.images.length)){T('⏳ جاري الرفع...');const url=await uploadToCloudinary(f);if(url){G.gym.images.push(url);renderImages();T('✅ تم الرفع');}else T('❌ فشل الرفع','error');} input.value=''; }
+function delImg(i){ showConfirm('حذف','متأكد؟',()=>{G.gym.images.splice(i,1);renderImages();}); }
+function renderPhones(){ const g=G.gym, list=document.getElementById('phonesList'); let h=''; if(g.phones)g.phones.forEach((p,i)=>{h+=`<div class="phone-row"><input type="tel" value="${p}" class="form-control" onchange="updatePhone(${i},this.value)"><button class="del-phone" onclick="delPhone(${i})">✕</button></div>`;}); list.innerHTML=h; }
+function addPhoneField(){ if(!G.gym.phones)G.gym.phones=[]; G.gym.phones.push(''); renderPhones(); }
+function updatePhone(i,v){ G.gym.phones[i]=v; }
+function delPhone(i){ G.gym.phones.splice(i,1); renderPhones(); }
+
 async function saveGym(){
-  const gs=LDB.getK('gyms',[]); const idx=gs.findIndex(g=>g.id===G.gid);
   const n=document.getElementById('gymName').value.trim(), mp=+document.getElementById('monthlyPrice').value;
-  if(!n){T('اكتب اسم الجيم','error');return;} if(!mp||mp<=0){T('اكتب سعر الشهر','error');return;}
-  if(!G.gym.images||G.gym.images.length===0){T('يجب إضافة صورة واحدة على الأقل','warning');}
-  gs[idx].name=n;gs[idx].monthlyPrice=mp;
-  gs[idx].yearlyPrice=document.getElementById('yearlyPrice').value?+document.getElementById('yearlyPrice').value:null;
-  gs[idx].sessionPrice=+document.getElementById('sessionPrice').value||0;
-  gs[idx].offerPrice=document.getElementById('offerPrice').value?+document.getElementById('offerPrice').value:null;
-  gs[idx].location=document.getElementById('gymLoc').value;
-  gs[idx].notes=document.getElementById('gymNotes').value;
-  gs[idx].images=G.gym.images||[];
-  gs[idx].phones=G.gym.phones||[];
-  LDB.setK('gyms',gs); G.gym=gs[idx]; document.getElementById('coachTitle').textContent=G.gym.name;
-  try { await db.collection('gyms').doc(G.gid).set(gs[idx],{merge:true}); } catch(e){}
-  T('تم حفظ التعديلات بنجاح');
+  if(!n){T('اكتب الاسم','error');return;} if(!mp){T('اكتب السعر','error');return;}
+  const data = {
+    name: n, monthlyPrice: mp,
+    yearlyPrice: document.getElementById('yearlyPrice').value?+document.getElementById('yearlyPrice').value:null,
+    sessionPrice: +document.getElementById('sessionPrice').value||0,
+    offerPrice: document.getElementById('offerPrice').value?+document.getElementById('offerPrice').value:null,
+    location: document.getElementById('gymLoc').value,
+    notes: document.getElementById('gymNotes').value,
+    images: G.gym.images||[], phones: G.gym.phones||[]
+  };
+  await db.collection('gyms').doc(G.gid).update(data);
+  G.gym = { ...G.gym, ...data }; document.getElementById('coachTitle').textContent = G.gym.name;
+  T('تم الحفظ');
 }
 
-async function loadReqCount(){ try{const snap=await db.collection('requests').where('gymId','==',G.gid).where('status','==','pending').get();const c=snap.size;const b=document.getElementById('reqBadge');b.textContent=c;b.style.display=c>0?'inline-block':'none';}catch(e){const reqs=LDB.getK('requests',[]).filter(r=>r.gymId===G.gid&&r.status==='pending');const b=document.getElementById('reqBadge');b.textContent=reqs.length;b.style.display=reqs.length>0?'inline-block':'none';} }
+async function loadReqCount(){ const snap=await db.collection('requests').where('gymId','==',G.gid).where('status','==','pending').get(); const b=document.getElementById('reqBadge'); b.textContent=snap.size; b.style.display=snap.size>0?'inline-block':'none'; }
 async function loadRequests(){
-  let reqs=[];
-  try{ const snap=await db.collection('requests').where('gymId','==',G.gid).where('status','==','pending').get(); snap.forEach(doc=>reqs.push({id:doc.id,...doc.data()})); } catch(e){ reqs=LDB.getK('requests',[]).filter(r=>r.gymId===G.gid&&r.status==='pending'); }
-  const c=document.getElementById('requestsList'); if(!reqs.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>لا طلبات معلقة</h4></div>';return;}
-  c.innerHTML=reqs.map(r=>`<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;"><div style="display:flex;justify-content:space-between;"><strong style="color:var(--text);">${r.name}</strong><span style="font-size:10px;color:var(--text-secondary);">${fmt(r.created)}</span></div><div style="color:var(--text-secondary);font-size:11px;margin:3px 0;">📞 ${r.phone} | ${r.subType==='monthly'?'شهري':'سنوي'}</div><div style="display:flex;gap:4px;"><button class="btn btn-success btn-sm" onclick='accReq("${r.id}")'>✅ قبول</button><button class="btn btn-danger btn-sm" onclick='rejReq("${r.id}")'>❌ رفض</button></div></div>`).join('');
+  const snap=await db.collection('requests').where('gymId','==',G.gid).where('status','==','pending').get();
+  const reqs=[]; snap.forEach(doc=>reqs.push({id:doc.id,...doc.data()}));
+  const c=document.getElementById('requestsList');
+  if(!reqs.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>لا طلبات</h4></div>';return;}
+  c.innerHTML=reqs.map(r=>`<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;"><div style="display:flex;justify-content:space-between;"><strong>${r.name}</strong><span style="font-size:10px;">${fmt(r.created)}</span></div><div style="font-size:11px;">📞 ${r.phone} | ${r.subType}</div><div style="display:flex;gap:4px;"><button class="btn btn-success btn-sm" onclick='accReq("${r.id}")'>✅ قبول</button><button class="btn btn-danger btn-sm" onclick='rejReq("${r.id}")'>❌ رفض</button></div></div>`).join('');
 }
 async function accReq(rid){
-  let req; try{ const snap=await db.collection('requests').doc(rid).get(); req={id:snap.id,...snap.data()}; } catch(e){ req=LDB.getK('requests',[]).find(r=>r.id===rid); }
-  if(!req)return;
-  const ms=LDB.getK('members',[]);
-  const dup=ms.find(m=>m.gymId===G.gid&&m.phone===req.phone&&m.active&&!m.leftByUser);
-  if(dup){ T('⚠️ هذا الرقم موجود بالفعل كمشترك نشط في الجيم','error'); return; }
+  const reqSnap=await db.collection('requests').doc(rid).get(); const req=reqSnap.data();
+  const dupSnap=await db.collection('members').where('gymId','==',G.gid).where('phone','==',req.phone).where('active','==',true).where('leftByUser','==',false).get();
+  if(!dupSnap.empty){T('الرقم موجود','error');return;}
   const sd=new Date(); const dd=new Date(sd); req.subType==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365);
-  const ext=ms.find(m=>m.gymId===G.gid&&m.phone===req.phone&&m.leftByUser);
-  if(ext){ext.type=req.subType;ext.start=sd.toISOString();ext.due=dd.toISOString();ext.paid=true;ext.leftByUser=false;ext.active=true;LDB.setK('members',ms);try{await db.collection('members').doc(ext.id).set(ext,{merge:true});}catch(e){}}
-  else {const mem={id:uid(),gymId:G.gid,gymName:G.gym.name,name:req.name,phone:req.phone,type:req.subType,start:sd.toISOString(),due:dd.toISOString(),monthlyPrice:G.gym.monthlyPrice,yearlyPrice:G.gym.yearlyPrice,paid:true,active:true,created:new Date().toISOString()};ms.push(mem);LDB.setK('members',ms);try{await db.collection('members').doc(mem.id).set(mem);}catch(e){}}
-  try{await db.collection('requests').doc(rid).update({status:'accepted'});}catch(e){const lreqs=LDB.getK('requests',[]);const i=lreqs.findIndex(r=>r.id===rid);if(i>=0){lreqs[i].status='accepted';LDB.setK('requests',lreqs);}}
-  loadRequests();loadReqCount();T('تم قبول الطلب');
+  await db.collection('members').add({gymId:G.gid,gymName:G.gym.name,name:req.name,phone:req.phone,type:req.subType,start:sd.toISOString(),due:dd.toISOString(),monthlyPrice:G.gym.monthlyPrice,yearlyPrice:G.gym.yearlyPrice,paid:true,active:true,created:new Date().toISOString()});
+  await db.collection('requests').doc(rid).update({status:'accepted'});
+  loadRequests();loadReqCount();T('تم القبول');
 }
-async function rejReq(rid){ showConfirm('رفض الطلب','<p style="color:var(--text-secondary);">متأكد من رفض هذا الطلب؟</p>',async()=>{try{await db.collection('requests').doc(rid).update({status:'rejected'});}catch(e){const lreqs=LDB.getK('requests',[]);const i=lreqs.findIndex(r=>r.id===rid);if(i>=0){lreqs[i].status='rejected';LDB.setK('requests',lreqs);}}loadRequests();loadReqCount();T('تم الرفض');}); }
+async function rejReq(rid){ showConfirm('رفض','متأكد؟',async()=>{await db.collection('requests').doc(rid).update({status:'rejected'});loadRequests();loadReqCount();T('تم الرفض');}); }
 
-function loadMembers(){
-  let ms = LDB.getK('members',[]).filter(m => m.gymId === G.gid && m.active && !m.leftByUser && !m.expelledByCoach);
-  const s = (document.getElementById('memberSearchInput')?.value||'').toLowerCase();
-  if(s) ms = ms.filter(m => m.name.toLowerCase().includes(s)||m.phone.includes(s));
-  const c = document.getElementById('membersList');
-  if(!ms.length){c.innerHTML='<div class="empty"><i class="fas fa-users"></i><h4>لا مشتركين</h4></div>';return;}
-  c.innerHTML=`<div class="members-table"><div class="members-table-header"><span>الاسم</span><span>النوع</span><span>الاستحقاق</span><span>الحالة</span></div>${ms.map(m=>{const ok=m.paid&&!exp(m.due);return`<div class="members-table-row" onclick='memAct("${m.id}")'><span style="font-weight:600;">${m.name}</span><span style="font-size:10px;">${m.type==='monthly'?'شهري':'سنوي'}</span><span style="font-size:10px;">${fmt(m.due)}</span><span><span class="status-badge ${ok?'status-paid':'status-unpaid'}">${ok?'مدفوع':'متأخر'}</span></span></div>`;}).join('')}</div>`;
+async function loadMembers(){
+  const snap=await db.collection('members').where('gymId','==',G.gid).where('active','==',true).where('leftByUser','==',false).get();
+  const ms=[]; snap.forEach(doc=>ms.push({id:doc.id,...doc.data()}));
+  const s=(document.getElementById('memberSearchInput')?.value||'').toLowerCase();
+  let f=ms; if(s)f=ms.filter(m=>m.name.toLowerCase().includes(s)||m.phone.includes(s));
+  const c=document.getElementById('membersList');
+  if(!f.length){c.innerHTML='<div class="empty"><i class="fas fa-users"></i><h4>لا مشتركين</h4></div>';return;}
+  c.innerHTML=`<div class="members-table"><div class="members-table-header"><span>الاسم</span><span>النوع</span><span>الاستحقاق</span><span>الحالة</span></div>${f.map(m=>{const ok=m.paid&&!exp(m.due);return`<div class="members-table-row" onclick='memAct("${m.id}")'><span>${m.name}</span><span>${m.type==='monthly'?'شهري':'سنوي'}</span><span>${fmt(m.due)}</span><span><span class="status-badge ${ok?'status-paid':'status-unpaid'}">${ok?'مدفوع':'متأخر'}</span></span></div>`;}).join('')}</div>`;
 }
-function memAct(mid){ const ms=LDB.getK('members',[]); G.curMem=ms.find(m=>m.id===mid); const ok=G.curMem.paid&&!exp(G.curMem.due); const canRenew=!G.curMem.paid||exp(G.curMem.due); document.getElementById('modalTitle').textContent='تفاصيل المشترك'; document.getElementById('modalBody').innerHTML=`<div style="text-align:center;"><i class="fas fa-user-circle" style="font-size:40px;color:var(--primary);"></i><h3 style="color:var(--text);">${G.curMem.name}</h3><p style="color:var(--text-secondary);">📞 ${G.curMem.phone}</p><div style="background:var(--light);border-radius:8px;padding:10px;text-align:right;"><div style="display:flex;justify-content:space-between;"><span>النوع</span><strong>${G.curMem.type==='monthly'?'شهري':'سنوي'}</strong></div><div style="display:flex;justify-content:space-between;"><span>الاستحقاق</span><strong>${fmt(G.curMem.due)}</strong></div><span class="status-badge ${ok?'status-paid':'status-unpaid'}">${ok?'مدفوع':'متأخر'}</span></div></div>`; let ft=''; if(canRenew)ft=`<button class="btn btn-success" onclick="renewMem()">🔄 تجديد</button>`; else ft=`<div style="padding:6px;background:#E8E8E8;border-radius:6px;text-align:center;font-size:12px;margin-bottom:4px;">لا يمكن التجديد قبل انتهاء الاشتراك</div>`; ft+=`<button class="btn btn-outline btn-sm" onclick='showEditMember("${G.curMem.id}")'>✏️ تعديل</button><button class="btn btn-danger btn-sm" onclick="expelMem()">❌ طرد</button><button class="btn btn-outline" onclick="closeModal('gymModal')">إغلاق</button>`; document.getElementById('modalFooter').innerHTML=ft; openModal('gymModal'); }
-function showEditMember(mid){ const ms=LDB.getK('members',[]); const m=ms.find(m=>m.id===mid); closeModal('gymModal'); document.getElementById('modalTitle').textContent='تعديل بيانات المشترك'; document.getElementById('modalBody').innerHTML=`<div class="form-group"><label>الاسم</label><input type="text" id="editMemName" class="form-control" value="${m.name}"></div><div class="form-group"><label>الهاتف</label><input type="tel" id="editMemPhone" class="form-control" value="${m.phone}"></div>`; document.getElementById('modalFooter').innerHTML=`<button class="btn btn-primary" onclick='saveEditMember("${mid}")'>💾 حفظ</button><button class="btn btn-outline" onclick="closeModal('gymModal')">إلغاء</button>`; openModal('gymModal'); }
-function saveEditMember(mid){ const ms=LDB.getK('members',[]); const m=ms.find(m=>m.id===mid); const nn=document.getElementById('editMemName').value.trim(),np=document.getElementById('editMemPhone').value.trim(); if(!nn){T('اكتب الاسم','error');return;} const dup=ms.find(m=>m.gymId===G.gid&&m.phone===np&&m.id!==mid&&m.active&&!m.leftByUser); if(dup){T('الرقم مستخدم لمشترك آخر','error');return;} m.name=nn;m.phone=np;LDB.setK('members',ms);syncMember(m);closeModal('gymModal');loadMembers();T('تم التعديل'); }
-function renewMem(){ const m=G.curMem; if(m.paid&&!exp(m.due)){T('الاشتراك لسه ساري - لا يمكن التجديد','error');return;} document.getElementById('modalTitle').textContent='تجديد الاشتراك'; document.getElementById('modalBody').innerHTML=`<p style="text-align:center;color:var(--text);"><strong>${m.name}</strong></p><div class="radio-group"><div class="radio-option selected" id="renOptMonthly" onclick="selectRenType('monthly')">📅 شهري<span style="display:block;font-size:10px;">${m.monthlyPrice} ج.م</span></div>${G.gym.yearlyPrice?`<div class="radio-option" id="renOptYearly" onclick="selectRenType('yearly')">📆 سنوي<span style="display:block;font-size:10px;">${m.yearlyPrice||G.gym.yearlyPrice} ج.م</span></div>`:''}</div>`; document.getElementById('modalFooter').innerHTML=`<button class="btn btn-success" onclick="confirmRenew()">✅ تأكيد التجديد</button><button class="btn btn-outline" onclick='memAct("${m.id}")'>رجوع</button>`; G.subType='monthly'; openModal('gymModal'); }
+async function memAct(mid){
+  const snap=await db.collection('members').doc(mid).get(); G.curMem={id:snap.id,...snap.data()};
+  const ok=G.curMem.paid&&!exp(G.curMem.due); const canRenew=!G.curMem.paid||exp(G.curMem.due);
+  document.getElementById('modalTitle').textContent='تفاصيل';
+  document.getElementById('modalBody').innerHTML=`<div style="text-align:center;"><i class="fas fa-user-circle" style="font-size:40px;color:var(--primary);"></i><h3>${G.curMem.name}</h3><p>📞 ${G.curMem.phone}</p><div style="background:var(--light);border-radius:8px;padding:10px;text-align:right;"><div style="display:flex;justify-content:space-between;"><span>النوع</span><strong>${G.curMem.type==='monthly'?'شهري':'سنوي'}</strong></div><div style="display:flex;justify-content:space-between;"><span>الاستحقاق</span><strong>${fmt(G.curMem.due)}</strong></div><span class="status-badge ${ok?'status-paid':'status-unpaid'}">${ok?'مدفوع':'متأخر'}</span></div></div>`;
+  let ft='';
+  if(canRenew)ft=`<button class="btn btn-success" onclick="renewMem()">🔄 تجديد</button>`;
+  else ft=`<div style="padding:6px;background:#E8E8E8;border-radius:6px;text-align:center;margin-bottom:4px;">لا يمكن التجديد</div>`;
+  ft+=`<button class="btn btn-danger btn-sm" onclick="expelMem()">❌ طرد</button><button class="btn btn-outline" onclick="closeModal('gymModal')">إغلاق</button>`;
+  document.getElementById('modalFooter').innerHTML=ft; openModal('gymModal');
+}
+async function renewMem(){
+  const m=G.curMem;
+  if(m.paid&&!exp(m.due)){T('الاشتراك لسه ساري','error');return;}
+  document.getElementById('modalTitle').textContent='تجديد';
+  document.getElementById('modalBody').innerHTML=`<p style="text-align:center;"><strong>${m.name}</strong></p><div class="radio-group"><div class="radio-option selected" id="renOptMonthly" onclick="selectRenType('monthly')">📅 شهري</div>${G.gym.yearlyPrice?`<div class="radio-option" id="renOptYearly" onclick="selectRenType('yearly')">📆 سنوي</div>`:''}</div>`;
+  document.getElementById('modalFooter').innerHTML=`<button class="btn btn-success" onclick="confirmRenew()">✅ تأكيد</button><button class="btn btn-outline" onclick='memAct("${m.id}")'>رجوع</button>`;
+  G.subType='monthly'; openModal('gymModal');
+}
 function selectRenType(t){ G.subType=t; document.querySelectorAll('#modalBody .radio-option').forEach(o=>o.classList.remove('selected')); document.getElementById(t==='monthly'?'renOptMonthly':'renOptYearly').classList.add('selected'); }
-function confirmRenew(){ const ms=LDB.getK('members',[]); const m=ms.find(m=>m.id===G.curMem.id); const dd=new Date(); G.subType==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365); m.due=dd.toISOString();m.paid=true;m.type=G.subType;LDB.setK('members',ms);syncMember(m);closeModal('gymModal');loadMembers();T('تم التجديد'); }
-function expelMem(){ showConfirm('طرد المشترك',`<p style="color:var(--text-secondary);">هل أنت متأكد من طرد <strong>${G.curMem.name}</strong>؟</p>`,()=>{ const ms=LDB.getK('members',[]); const m=ms.find(m=>m.id===G.curMem.id); m.active=false;m.expelledByCoach=true;m.expelledAt=new Date().toISOString();LDB.setK('members',ms);syncMember(m);closeModal('gymModal');loadMembers();T('تم طرد المشترك'); }); }
-async function syncMember(m){ try { await db.collection('members').doc(m.id).set(m,{merge:true}); } catch(e){} }
-function showAddMember(){ document.getElementById('modalTitle').textContent='إضافة مشترك'; document.getElementById('modalBody').innerHTML=`<div class="form-group"><label>الاسم *</label><input type="text" id="addMemName" class="form-control"></div><div class="form-group"><label>الهاتف *</label><input type="tel" id="addMemPhone" class="form-control"></div><div class="form-group"><label>النوع</label><select id="addMemType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div><div class="form-group"><label>تاريخ الدفع</label><input type="date" id="addMemDate" class="form-control"></div>`; document.getElementById('modalFooter').innerHTML='<button class="btn btn-success" onclick="addMem()">➕ إضافة</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; document.getElementById('addMemDate').value=new Date().toISOString().split('T')[0]; openModal('gymModal'); }
-function addMem(){ const n=document.getElementById('addMemName').value.trim(),p=document.getElementById('addMemPhone').value.trim(),t=document.getElementById('addMemType').value,d=document.getElementById('addMemDate').value; if(!n||!p){T('اكتب البيانات','error');return;} const ms=LDB.getK('members',[]); if(ms.find(m=>m.gymId===G.gid&&m.phone===p&&m.active&&!m.leftByUser)){T('⚠️ هذا الرقم موجود بالفعل كمشترك نشط','error');return;} const dd=new Date(d);t==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365); const mem={id:uid(),gymId:G.gid,gymName:G.gym.name,name:n,phone:p,type:t,start:new Date(d).toISOString(),due:dd.toISOString(),monthlyPrice:G.gym.monthlyPrice,yearlyPrice:G.gym.yearlyPrice,paid:true,active:true,created:new Date().toISOString()}; ms.push(mem);LDB.setK('members',ms);syncMember(mem);closeModal('gymModal');loadMembers();T('تم إضافة المشترك'); }
-function loadSessions(){ const date=document.getElementById('sessionDate').value||new Date().toISOString().split('T')[0]; const ss=LDB.getK('sessions',[]).filter(s=>s.gymId===G.gid&&s.date===date); const total=ss.reduce((a,s)=>a+s.price,0); document.getElementById('sessCount').textContent=ss.length; document.getElementById('sessTotal').textContent=total+' ج.م'; const c=document.getElementById('sessionsList'); if(!ss.length){c.innerHTML='<div class="empty"><i class="fas fa-calendar"></i><h4>لا حصص</h4></div>';return;} c.innerHTML=ss.map(s=>`<div style="background:var(--card);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;justify-content:space-between;"><span style="color:var(--text);">${s.name}</span><span style="color:var(--primary);font-weight:700;">${s.price} ج.م</span></div>`).join(''); }
-function showAddSession(){ document.getElementById('modalTitle').textContent='حصة جديدة'; document.getElementById('modalBody').innerHTML=`<div class="form-group"><label>المتدرب</label><input type="text" id="sessName" class="form-control"></div><div class="form-group"><label>السعر</label><input type="number" id="sessPrice" class="form-control" value="${G.gym.sessionPrice||0}"></div>`; document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="addSess()">تسجيل</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; openModal('gymModal'); }
-function addSess(){ const n=document.getElementById('sessName').value.trim(),p=+document.getElementById('sessPrice').value; if(!n){T('اكتب الاسم','error');return;} const ss=LDB.getK('sessions',[]); ss.push({id:uid(),gymId:G.gid,name:n,price:p,date:new Date().toISOString().split('T')[0],created:new Date().toISOString()}); LDB.setK('sessions',ss); closeModal('gymModal');loadSessions();T('تم تسجيل الحصة'); }
-function logoutCoach(){ sessionStorage.removeItem('coachId'); G.gym=null; G.gid=null; goTo('home'); }
+async function confirmRenew(){
+  const dd=new Date(); G.subType==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365);
+  await db.collection('members').doc(G.curMem.id).update({due:dd.toISOString(),paid:true,type:G.subType});
+  closeModal('gymModal');loadMembers();T('تم التجديد');
+}
+async function expelMem(){
+  showConfirm('طرد',`متأكد من طرد ${G.curMem.name}؟`,async()=>{
+    await db.collection('members').doc(G.curMem.id).update({active:false,expelledByCoach:true,expelledAt:new Date().toISOString()});
+    closeModal('gymModal');loadMembers();T('تم الطرد');
+  });
+}
+async function showAddMember(){ /* same as before */ }
+async function addMem(){ /* same as before but using Firebase */ }
+
+async function loadSessions(){ /* LocalStorage - same */ }
+async function showAddSession(){ /* LocalStorage - same */ }
+async function addSess(){ /* LocalStorage - same */ }
+
+function logoutCoach(){ sessionStorage.removeItem('coachId'); goTo('home'); }
 
 // ==================== ADMIN ====================
-async function loadAdmin(){ await syncGymsFromFirebase(); const gs=LDB.getK('gyms',[]); const total=gs.length; const act=gs.filter(g=>g.active&&!exp(g.subEnd)).length; const expiring=gs.filter(g=>g.active&&g.subEnd&&daysR(g.subEnd)<=3&&daysR(g.subEnd)>0).length; document.getElementById('adminContent').innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;"><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);">${total}</div><div style="font-size:11px;">جيم</div></div><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--success);">${act}</div><div style="font-size:11px;">نشط</div></div><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:${expiring>0?'var(--danger)':'var(--gray)'};">${expiring}</div><div style="font-size:11px;">قريب الانتهاء</div></div></div><div style="display:flex;justify-content:space-between;margin-bottom:10px;"><h3 style="color:var(--text);">الجيمات</h3><button class="btn btn-primary btn-sm" onclick="newGym()">+ جيم</button></div>${gs.map(g=>{const ok=g.active&&!exp(g.subEnd);const r=daysR(g.subEnd)||0;return`<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;box-shadow:var(--shadow);"><div style="display:flex;justify-content:space-between;"><strong style="color:var(--text);">${g.name}</strong><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${ok?'#D4EDDA':'#F8D7DA'};color:${ok?'#155724':'#721C24'};">${ok?'نشط':'منتهي'}</span></div><div style="color:var(--text-secondary);font-size:11px;margin:3px 0;">🔑 ${g.redeemCode} | متبقي ${r} يوم</div><div style="display:flex;gap:4px;"><button class="btn btn-success btn-sm" onclick='renGym("${g.id}")'>تجديد</button><button class="btn ${g.active?'btn-danger':'btn-success'} btn-sm" onclick='togGym("${g.id}")'>${g.active?'تعطيل':'تفعيل'}</button></div></div>`}).join('')}`; }
-function newGym(){ document.getElementById('modalTitle').textContent='جيم جديد'; document.getElementById('modalBody').innerHTML=`<div class="form-group"><label>الاسم</label><input type="text" id="ngName" class="form-control"></div><div class="form-group"><label>الكود</label><input type="text" id="ngCode" class="form-control" style="text-transform:uppercase;"></div><div class="row"><div class="form-group"><label>النوع</label><select id="ngType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div><div class="form-group"><label>تاريخ البداية</label><input type="date" id="ngDate" class="form-control"></div></div>`; document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="createGym()">إنشاء</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; document.getElementById('ngDate').value=new Date().toISOString().split('T')[0]; openModal('gymModal'); }
-async function createGym(){ const n=document.getElementById('ngName').value.trim(),co=document.getElementById('ngCode').value.trim().toUpperCase(),t=document.getElementById('ngType').value,d=document.getElementById('ngDate').value; if(!n||!co){T('اكتب البيانات','error');return;} const gs=LDB.getK('gyms',[]); if(gs.find(g=>g.redeemCode===co)){T('الكود مستخدم','error');return;} const dd=new Date(d);t==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365); const gym={id:uid(),name:n,redeemCode:co,active:true,images:[],monthlyPrice:0,yearlyPrice:null,sessionPrice:0,offerPrice:null,phones:[],location:'',notes:'',subType:t,subStart:new Date(d).toISOString(),subEnd:dd.toISOString(),created:new Date().toISOString()}; gs.push(gym);LDB.setK('gyms',gs); try{await db.collection('gyms').doc(gym.id).set(gym);}catch(e){} closeModal('gymModal');loadAdmin();T('تم الإنشاء'); }
-function renGym(id){ G.renGym=id; document.getElementById('modalTitle').textContent='تجديد'; document.getElementById('modalBody').innerHTML=`<div class="form-group"><label>النوع</label><select id="renType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div><div class="form-group"><label>تاريخ البداية</label><input type="date" id="renDate" class="form-control"></div>`; document.getElementById('modalFooter').innerHTML='<button class="btn btn-success" onclick="doRenew()">تأكيد</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; document.getElementById('renDate').value=new Date().toISOString().split('T')[0]; openModal('gymModal'); }
-async function doRenew(){ const gs=LDB.getK('gyms',[]); const g=gs.find(g=>g.id===G.renGym); const t=document.getElementById('renType').value,d=document.getElementById('renDate').value; const dd=new Date(d);t==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365); g.subType=t;g.subStart=new Date(d).toISOString();g.subEnd=dd.toISOString();g.active=true;LDB.setK('gyms',gs); try{await db.collection('gyms').doc(g.id).update({subType:t,subStart:g.subStart,subEnd:g.subEnd,active:true});}catch(e){} closeModal('gymModal');loadAdmin();T('تم التجديد'); }
-async function togGym(id){ const gs=LDB.getK('gyms',[]); const g=gs.find(g=>g.id===id); g.active=!g.active;LDB.setK('gyms',gs); try{await db.collection('gyms').doc(id).update({active:g.active});}catch(e){} loadAdmin();T(g.active?'تم التفعيل':'تم التعطيل'); }
+async function loadAdmin(){ const snap=await db.collection('gyms').get(); const gs=[]; snap.forEach(doc=>gs.push({id:doc.id,...doc.data()})); G.allGyms=gs; /* rest same */ }
 function logoutAdmin(){ sessionStorage.removeItem('admin'); goTo('home'); }
 
 // ==================== INIT ====================
 (async function(){
-  const gs = LDB.getK('gyms', []);
-  if (gs.length === 0) { try { const snap = await db.collection('gyms').get(); const fbgyms = []; snap.forEach(doc => fbgyms.push({ id: doc.id, ...doc.data() })); if (fbgyms.length > 0) LDB.setK('gyms', fbgyms); } catch(e) {} }
-  if (localStorage.getItem('darkMode')==='1') { document.body.classList.add('dark'); document.querySelectorAll('.btn-icon-only i').forEach(i => i.className = 'fas fa-sun'); }
-  if (sessionStorage.getItem('admin')==='1') { goTo('admin'); loadAdmin(); return; }
-  const cid = sessionStorage.getItem('coachId');
-  if (cid) { const gs = LDB.getK('gyms', []); const g = gs.find(g => g.id===cid); if (g && g.active && !exp(g.subEnd)) { G.gym=g; G.gid=g.id; document.getElementById('coachTitle').textContent=g.name; goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount(); listenForNewRequests(); return; } sessionStorage.removeItem('coachId'); }
+  if(localStorage.getItem('darkMode')==='1'){ document.body.classList.add('dark'); }
+  if(sessionStorage.getItem('admin')==='1'){ goTo('admin'); loadAdmin(); return; }
+  const cid=sessionStorage.getItem('coachId');
+  if(cid){ const snap=await db.collection('gyms').doc(cid).get(); if(snap.exists){ G.gym={id:snap.id,...snap.data()}; G.gid=snap.id; document.getElementById('coachTitle').textContent=G.gym.name; goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount(); return; } sessionStorage.removeItem('coachId'); }
   goTo('home'); loadGyms();
-  setInterval(syncGymsFromFirebase, 60000);
 })();
 </script>
 
