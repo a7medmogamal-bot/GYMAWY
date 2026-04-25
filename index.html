@@ -3,7 +3,7 @@
 
   <head>
     <meta charset="UTF-8">
-    <title>Gymawy | جيماوي</title>
+    <title>Untitled</title>
     
 
   </head>
@@ -17,8 +17,14 @@
   <meta name="theme-color" content="#6C5CE7">
   <title>جيماوي - منصة الجيمات</title>
   
+  <!-- #### Google AdSense #### -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4033236890088922" crossorigin="anonymous"></script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- #### مكتبة التشفير SHA256 #### -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -233,29 +239,59 @@ const db = firebase.firestore();
 const rtdb = firebase.database();
 
 const CLOUD = { cloudName: 'di5z4lzwv', preset: 'gymawy_upload' };
-const ADMIN = 'ADMIN2026GYM', PASS = '123456', PHONE = '01016212814';
+const PASS_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
+const ADMIN_CODE = "ADMIN2026GYM";
+const PHONE = '01016212814';
 
 // ==================== STATE ====================
 let G = { gym: null, gid: null, selGym: null, curMem: null, subType: 'monthly', pendGym: null, allGyms: [] };
 let confirmCB = null;
+let reqListener = null;
 
 // ==================== HELPERS ====================
 function T(m, t='success') { const x = document.getElementById('toast'); x.textContent = m; x.className = 'toast '+t; x.style.display = 'block'; clearTimeout(x._t); x._t = setTimeout(() => x.style.display = 'none', 3000); }
-function goTo(p) { document.querySelectorAll('.page').forEach(x => x.classList.remove('active')); document.getElementById(p+'Page').classList.add('active'); if(p==='home') loadGyms(); if(p==='profile') loadProfile(); if(p==='myReq') loadMyReqs(); }
+function goTo(p) { 
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active')); 
+  document.getElementById(p+'Page').classList.add('active'); 
+  if(p==='home') loadGyms(); 
+  if(p==='profile') loadProfile(); 
+  if(p==='myReq') loadMyReqs(); 
+}
 function openModal(id) { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 function fmt(d) { if(!d) return ''; return new Date(d).toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' }); }
 function exp(d) { return new Date(d) < new Date(); }
 function daysR(d) { return Math.ceil((new Date(d) - new Date()) / 86400000); }
-function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-function showConfirm(t, m, cb) { document.getElementById('confirmTitle').textContent = t; document.getElementById('confirmBody').innerHTML = m; confirmCB = cb; document.getElementById('confirmYesBtn').onclick = () => { closeModal('confirmModal'); if(confirmCB) confirmCB(); }; openModal('confirmModal'); }
-function toggleDark() { document.body.classList.toggle('dark'); const is = document.body.classList.contains('dark'); localStorage.setItem('darkMode', is?'1':'0'); document.querySelectorAll('.btn-icon-only i').forEach(i => i.className = is?'fas fa-sun':'fas fa-moon'); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substring(2, 8); }
+function showConfirm(t, m, cb) { 
+  document.getElementById('confirmTitle').textContent = t; 
+  document.getElementById('confirmBody').innerHTML = m; 
+  confirmCB = cb; 
+  document.getElementById('confirmYesBtn').onclick = () => { closeModal('confirmModal'); if(confirmCB) confirmCB(); }; 
+  openModal('confirmModal'); 
+}
+function toggleDark() { 
+  document.body.classList.toggle('dark'); 
+  const is = document.body.classList.contains('dark'); 
+  localStorage.setItem('darkMode', is?'1':'0'); 
+  document.querySelectorAll('.btn-icon-only i').forEach(i => i.className = is?'fas fa-sun':'fas fa-moon'); 
+}
 function moveNext(c, n) { if(c.value.length === 1) document.getElementById(n)?.focus(); }
 
 // ==================== CLOUDINARY ====================
 async function uploadImg(file) {
   const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', CLOUD.preset);
   try { const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD.cloudName}/image/upload`, { method:'POST', body:fd }); const d = await r.json(); return d.secure_url || null; } catch(e) { return null; }
+}
+
+// #### التحقق من وجود طلب معلق لنفس الجيم ####
+async function hasPendingRequest(gymId, phone) {
+  const snap = await db.collection('requests')
+    .where('gymId', '==', gymId)
+    .where('phone', '==', phone)
+    .where('status', '==', 'pending')
+    .get();
+  return !snap.empty;
 }
 
 // ==================== GYMS (FIREBASE) ====================
@@ -265,8 +301,27 @@ async function loadGyms() {
   try {
     const snap = await db.collection('gyms').get();
     G.allGyms = []; snap.forEach(doc => G.allGyms.push({ id: doc.id, ...doc.data() }));
+    
+    // #### إخفاء الجيمات اللي المستخدم اترفض منها 5 مرات ####
+    const ph = sessionStorage.getItem('userPhone');
+    let hiddenGyms = [];
+    if(ph) {
+      const allRejected = await db.collection('requests')
+        .where('phone', '==', ph)
+        .where('status', '==', 'rejected')
+        .get();
+      
+      const rejectCount = {};
+      allRejected.forEach(doc => {
+        const d = doc.data();
+        rejectCount[d.gymId] = (rejectCount[d.gymId] || 0) + 1;
+      });
+      
+      hiddenGyms = Object.keys(rejectCount).filter(gid => rejectCount[gid] >= 5);
+    }
+    
     const s = (document.getElementById('searchInput')?.value || '').toLowerCase();
-    let f = G.allGyms.filter(g => g.active && g.subEnd && !exp(g.subEnd));
+    let f = G.allGyms.filter(g => g.active && g.subEnd && !exp(g.subEnd) && !hiddenGyms.includes(g.id));
     if(s) f = f.filter(g => g.name.toLowerCase().includes(s) || (g.location||'').toLowerCase().includes(s));
     if(!f.length) { c.innerHTML = '<div class="empty"><i class="fas fa-store-slash"></i><h4>لا جيمات متاحة</h4></div>'; return; }
     c.innerHTML = f.map(g => `
@@ -279,7 +334,6 @@ async function loadGyms() {
 
 function showGym(id) {
   const g = G.allGyms.find(x => x.id === id); if(!g) return; G.selGym = g;
-  const ph = sessionStorage.getItem('userPhone');
   document.getElementById('modalTitle').textContent = g.name;
   document.getElementById('modalBody').innerHTML = `
     ${g.images?.length ? `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;">${g.images.map(i => `<img src="${i}" style="width:180px;height:130px;object-fit:cover;border-radius:10px;pointer-events:none;" oncontextmenu="return false;">`).join('')}</div>` : ''}
@@ -296,9 +350,14 @@ function showGym(id) {
 }
 
 // ==================== SUBSCRIPTION ====================
-function subGym() {
+async function subGym() {
   const ph = sessionStorage.getItem('userPhone');
   if(!ph) { G.pendGym = G.selGym; closeModal('gymModal'); goTo('register'); T('سجل بياناتك الأول', 'warning'); return; }
+  
+  // #### منع إرسال طلب جديد لو فيه طلب معلق ####
+  const hasPending = await hasPendingRequest(G.selGym.id, ph);
+  if(hasPending) { T('⚠️ لديك طلب معلق بالفعل في هذا الجيم. انتظر رد الكوتش.', 'warning'); return; }
+  
   G.subType = 'monthly';
   document.getElementById('modalTitle').textContent = 'اختر نوع الاشتراك';
   document.getElementById('modalBody').innerHTML = `<p style="text-align:center;color:var(--text);"><strong>${G.selGym.name}</strong></p><div class="radio-group"><div class="radio-option selected" id="optMonthly" onclick="selSub('monthly')">📅 شهري<span style="display:block;font-size:11px;color:var(--text-secondary);">${G.selGym.monthlyPrice} ج.م/شهر</span></div>${G.selGym.yearlyPrice ? `<div class="radio-option" id="optYearly" onclick="selSub('yearly')">📆 سنوي<span style="display:block;font-size:11px;color:var(--text-secondary);">${G.selGym.yearlyPrice} ج.م/سنة</span></div>` : ''}</div><div style="margin-top:10px;padding:8px;background:#EFF6FF;border-radius:8px;font-size:11px;color:#1E40AF;">بعد التقديم توجه للجيم للدفع</div>`;
@@ -355,7 +414,7 @@ async function loadMyReqs() {
 // ==================== REDEEM ====================
 async function checkCode() {
   const code = document.getElementById('redeemCode').value.trim().toUpperCase();
-  if(code === ADMIN) { openModal('passcodeModal'); return; }
+  if(code === ADMIN_CODE) { openModal('passcodeModal'); return; }
   const snap = await db.collection('gyms').where('redeemCode', '==', code).get();
   if(snap.empty) { T('الكود غير صحيح', 'error'); return; }
   const doc = snap.docs[0]; G.gym = { id: doc.id, ...doc.data() }; G.gid = doc.id;
@@ -365,12 +424,27 @@ async function checkCode() {
   document.getElementById('coachTitle').textContent = G.gym.name;
   document.getElementById('redeemCode').value = '';
   goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount();
-  rtdb.ref('newRequests/' + G.gid).on('value', snap => { if(snap.val()) { T('🔔 طلب اشتراك جديد!', 'warning'); loadReqCount(); rtdb.ref('newRequests/' + G.gid).remove(); } });
+  if(reqListener) rtdb.ref('newRequests/' + G.gid).off('value', reqListener);
+  reqListener = snap => {
+    if(snap.val()) {
+      T('🔔 طلب اشتراك جديد!', 'warning');
+      loadReqCount();
+      rtdb.ref('newRequests/' + G.gid).remove();
+    }
+  };
+  rtdb.ref('newRequests/' + G.gid).on('value', reqListener);
 }
+
 function verifyPass() {
-  let v = ''; for(let i = 1; i <= 6; i++) v += document.getElementById('pc' + i).value;
-  if(v === PASS) { closeModal('passcodeModal'); sessionStorage.setItem('admin', '1'); for(let i = 1; i <= 6; i++) document.getElementById('pc' + i).value = ''; goTo('admin'); loadAdmin(); }
-  else T('كلمة مرور غير صحيحة', 'error');
+  let v = '';
+  for(let i = 1; i <= 6; i++) v += document.getElementById('pc' + i).value;
+  const inputHash = CryptoJS.SHA256(v).toString();
+  if(inputHash === PASS_HASH) {
+    closeModal('passcodeModal');
+    sessionStorage.setItem('admin', '1');
+    for(let i = 1; i <= 6; i++) document.getElementById('pc' + i).value = '';
+    goTo('admin'); loadAdmin();
+  } else T('كلمة مرور غير صحيحة', 'error');
 }
 
 // ==================== COACH ====================
@@ -413,83 +487,267 @@ async function accReq(rid) {
   const reqSnap = await db.collection('requests').doc(rid).get(); const req = reqSnap.data();
   const dupSnap = await db.collection('members').where('gymId', '==', G.gid).where('phone', '==', req.phone).where('active', '==', true).where('leftByUser', '==', false).get();
   if(!dupSnap.empty) { T('⚠️ هذا الرقم موجود بالفعل كمشترك نشط', 'error'); return; }
-  const sd = new Date(); const dd = new Date(sd); req.subType === 'monthly' ? dd.setDate(dd.getDate() + 30) : dd.setDate(dd.getDate() + 365);
-  await db.collection('members').add({ gymId: G.gid, gymName: G.gym.name, name: req.name, phone: req.phone, type: req.subType, start: sd.toISOString(), due: dd.toISOString(), monthlyPrice: G.gym.monthlyPrice, yearlyPrice: G.gym.yearlyPrice, paid: true, active: true, created: new Date().toISOString() });
+  const sd = new Date(); const dd = new Date(sd); 
+  req.subType === 'monthly' ? dd.setDate(dd.getDate() + 30) : dd.setDate(dd.getDate() + 365);
+  
+  await db.collection('members').add({ 
+    gymId: G.gid, gymName: G.gym.name, name: req.name, phone: req.phone, 
+    type: req.subType, start: sd.toISOString(), due: dd.toISOString(), 
+    monthlyPrice: G.gym.monthlyPrice, yearlyPrice: G.gym.yearlyPrice, 
+    paid: true, active: true, leftByUser: false, created: new Date().toISOString() 
+  });
+  
   await db.collection('requests').doc(rid).update({ status: 'accepted' });
   loadRequests(); loadReqCount(); T('تم قبول الطلب');
 }
-async function rejReq(rid) { showConfirm('رفض الطلب', '<p style="color:var(--text-secondary);">متأكد من رفض الطلب؟</p>', async () => { await db.collection('requests').doc(rid).update({ status: 'rejected' }); loadRequests(); loadReqCount(); T('تم الرفض'); }); }
+async function rejReq(rid) { 
+  showConfirm('رفض الطلب', '<p style="color:var(--text-secondary);">متأكد من رفض الطلب؟</p>', async () => { 
+    await db.collection('requests').doc(rid).update({ status: 'rejected' }); 
+    loadRequests(); loadReqCount(); T('تم الرفض'); 
+  }); 
+}
 
 async function loadMembers() {
-  const snap = await db.collection('members').where('gymId', '==', G.gid).where('active', '==', true).where('leftByUser', '==', false).get();
-  const ms = []; snap.forEach(doc => ms.push({ id: doc.id, ...doc.data() }));
-  const s = (document.getElementById('memberSearchInput')?.value || '').toLowerCase();
-  let f = ms; if(s) f = ms.filter(m => m.name.toLowerCase().includes(s) || m.phone.includes(s));
   const c = document.getElementById('membersList');
-  if(!f.length) { c.innerHTML = '<div class="empty"><i class="fas fa-users"></i><h4>لا مشتركين</h4></div>'; return; }
-  c.innerHTML = `<div class="members-table"><div class="members-table-header"><span>الاسم</span><span>النوع</span><span>الاستحقاق</span><span>الحالة</span></div>${f.map(m => { const ok = m.paid && !exp(m.due); return `<div class="members-table-row" onclick='memAct("${m.id}")'><span style="font-weight:600;">${m.name}</span><span style="font-size:10px;">${m.type === 'monthly' ? 'شهري' : 'سنوي'}</span><span style="font-size:10px;">${fmt(m.due)}</span><span><span class="status-badge ${ok ? 'status-paid' : 'status-unpaid'}">${ok ? 'مدفوع' : 'متأخر'}</span></span></div>`; }).join('')}</div>`;
+  try {
+    const snap = await db.collection('members')
+      .where('gymId', '==', G.gid)
+      .where('active', '==', true)
+      .where('leftByUser', '==', false)
+      .get();
+    
+    const ms = []; 
+    snap.forEach(doc => {
+      const data = doc.data();
+      ms.push({ id: doc.id, ...data });
+    });
+    
+    const s = (document.getElementById('memberSearchInput')?.value || '').toLowerCase();
+    let f = ms;
+    if(s) f = ms.filter(m => (m.name || '').toLowerCase().includes(s) || (m.phone || '').includes(s));
+    
+    if(!f.length) { c.innerHTML = '<div class="empty"><i class="fas fa-users"></i><h4>لا مشتركين</h4></div>'; return; }
+    
+    c.innerHTML = `<div class="members-table">
+      <div class="members-table-header"><span>الاسم</span><span>النوع</span><span>الاستحقاق</span><span>الحالة</span></div>
+      ${f.map(m => { 
+        const isPaid = m.paid === true;
+        const isExpired = exp(m.due);
+        const ok = isPaid && !isExpired;
+        const displayName = m.name || 'بدون اسم';
+        
+        return `<div class="members-table-row" onclick='memAct("${m.id}")'>
+          <span style="font-weight:600;">${displayName}</span>
+          <span style="font-size:10px;">${m.type === 'monthly' ? 'شهري' : 'سنوي'}</span>
+          <span style="font-size:10px;">${fmt(m.due)}</span>
+          <span><span class="status-badge ${ok ? 'status-paid' : 'status-unpaid'}">${ok ? 'مدفوع' : 'متأخر'}</span></span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } catch(e) {
+    c.innerHTML = '<div class="empty"><i class="fas fa-exclamation-triangle"></i><h4>خطأ في تحميل المشتركين</h4></div>';
+  }
 }
+
 async function memAct(mid) {
-  const snap = await db.collection('members').doc(mid).get(); G.curMem = { id: snap.id, ...snap.data() };
-  const ok = G.curMem.paid && !exp(G.curMem.due); const canRenew = !G.curMem.paid || exp(G.curMem.due);
-  document.getElementById('modalTitle').textContent = 'تفاصيل المشترك';
-  document.getElementById('modalBody').innerHTML = `<div style="text-align:center;"><i class="fas fa-user-circle" style="font-size:40px;color:var(--primary);"></i><h3 style="color:var(--text);">${G.curMem.name}</h3><p style="color:var(--text-secondary);">📞 ${G.curMem.phone}</p><div style="background:var(--light);border-radius:8px;padding:10px;text-align:right;"><div style="display:flex;justify-content:space-between;"><span>النوع</span><strong>${G.curMem.type === 'monthly' ? 'شهري' : 'سنوي'}</strong></div><div style="display:flex;justify-content:space-between;"><span>الاستحقاق</span><strong>${fmt(G.curMem.due)}</strong></div><span class="status-badge ${ok ? 'status-paid' : 'status-unpaid'}">${ok ? 'مدفوع' : 'متأخر'}</span></div></div>`;
-  let ft = '';
-  if(canRenew) ft = `<button class="btn btn-success" onclick="renewMem()">🔄 تجديد</button>`;
-  else ft = `<div style="padding:6px;background:#E8E8E8;border-radius:6px;text-align:center;font-size:12px;margin-bottom:4px;">لا يمكن التجديد قبل انتهاء الاشتراك</div>`;
-  ft += `<button class="btn btn-outline btn-sm" onclick='showEditMember("${G.curMem.id}")'>✏️ تعديل</button><button class="btn btn-danger btn-sm" onclick="expelMem()">❌ طرد</button><button class="btn btn-outline" onclick="closeModal('gymModal')">إغلاق</button>`;
-  document.getElementById('modalFooter').innerHTML = ft; openModal('gymModal');
+  try {
+    const snap = await db.collection('members').doc(mid).get(); 
+    const m = snap.data();
+    G.curMem = { id: snap.id, ...m };
+    
+    const isPaid = m.paid === true;
+    const isExpired = exp(m.due);
+    const ok = isPaid && !isExpired;
+    const canRenew = !isPaid || isExpired;
+    const displayName = m.name || 'بدون اسم';
+    const typeLabel = m.type === 'monthly' ? 'شهري' : 'سنوي';
+    
+    document.getElementById('modalTitle').textContent = 'تفاصيل المشترك';
+    document.getElementById('modalBody').innerHTML = `<div style="text-align:center;">
+      <i class="fas fa-user-circle" style="font-size:40px;color:var(--primary);"></i>
+      <h3 style="color:var(--text);">${displayName}</h3>
+      <p style="color:var(--text-secondary);">📞 ${m.phone || 'لا يوجد'}</p>
+      <div style="background:var(--light);border-radius:8px;padding:10px;text-align:right;">
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>📅 تاريخ البداية</span><strong>${fmt(m.start)}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>⏳ تاريخ الانتهاء</span><strong>${fmt(m.due)}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>النوع</span><strong>${typeLabel}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;"><span>السعر</span><strong>${m.monthlyPrice || m.yearlyPrice || '—'} ج.م</strong></div>
+        <div style="margin-top:6px;"><span class="status-badge ${ok ? 'status-paid' : 'status-unpaid'}" style="font-size:12px;">${ok ? '✅ مدفوع' : '❌ متأخر - يحتاج تجديد'}</span></div>
+      </div>
+    </div>`;
+    
+    let ft = '';
+    if(canRenew) {
+      ft += `<button class="btn btn-success" onclick="renewMem()">🔄 تجديد الاشتراك</button>`;
+    } else {
+      ft += `<div style="padding:8px;background:#D4EDDA;border-radius:8px;text-align:center;font-size:12px;color:#155724;margin-bottom:4px;">✅ الاشتراك ساري - لا يحتاج تجديد</div>`;
+    }
+    ft += `<button class="btn btn-outline btn-sm" onclick='showEditMember("${G.curMem.id}")'>✏️ تعديل</button>
+      <button class="btn btn-danger btn-sm" onclick="expelMem()">❌ طرد</button>
+      <button class="btn btn-outline" onclick="closeModal('gymModal')">إغلاق</button>`;
+    
+    document.getElementById('modalFooter').innerHTML = ft; 
+    openModal('gymModal');
+  } catch(e) {
+    T('خطأ في تحميل بيانات المشترك', 'error');
+  }
 }
+
 async function showEditMember(mid) {
-  const snap = await db.collection('members').doc(mid).get(); const m = snap.data();
-  closeModal('gymModal');
+  const snap = await db.collection('members').doc(mid).get(); 
+  const m = snap.data();
+  
   document.getElementById('modalTitle').textContent = 'تعديل بيانات المشترك';
-  document.getElementById('modalBody').innerHTML = `<div class="form-group"><label>الاسم</label><input type="text" id="editMemName" class="form-control" value="${m.name}"></div><div class="form-group"><label>الهاتف</label><input type="tel" id="editMemPhone" class="form-control" value="${m.phone}"></div>`;
-  document.getElementById('modalFooter').innerHTML = `<button class="btn btn-primary" onclick='saveEditMember("${mid}")'>💾 حفظ</button><button class="btn btn-outline" onclick="closeModal('gymModal')">إلغاء</button>`;
-  openModal('gymModal');
+  document.getElementById('modalBody').innerHTML = `
+    <div class="form-group"><label>الاسم</label><input type="text" id="editMemName" class="form-control" value="${m.name || ''}"></div>
+    <div class="form-group"><label>الهاتف</label><input type="tel" id="editMemPhone" class="form-control" value="${m.phone || ''}"></div>`;
+  document.getElementById('modalFooter').innerHTML = `
+    <button class="btn btn-primary" onclick='saveEditMember("${mid}")'>💾 حفظ</button>
+    <button class="btn btn-outline" onclick="memAct('${mid}')">رجوع</button>`;
 }
 async function saveEditMember(mid) {
   const nn = document.getElementById('editMemName').value.trim(), np = document.getElementById('editMemPhone').value.trim();
   if(!nn) { T('اكتب الاسم', 'error'); return; }
+  if(!np) { T('اكتب رقم الهاتف', 'error'); return; }
   const dupSnap = await db.collection('members').where('gymId', '==', G.gid).where('phone', '==', np).where('active', '==', true).where('leftByUser', '==', false).get();
   if(!dupSnap.empty && dupSnap.docs[0].id !== mid) { T('⚠️ الرقم مستخدم لمشترك آخر', 'error'); return; }
   await db.collection('members').doc(mid).update({ name: nn, phone: np });
-  closeModal('gymModal'); loadMembers(); T('تم التعديل');
+  loadMembers(); 
+  T('تم التعديل');
+  // الرجوع لتفاصيل المشترك بعد التعديل
+  setTimeout(() => memAct(mid), 300);
 }
 async function renewMem() {
   const m = G.curMem;
-  if(m.paid && !exp(m.due)) { T('الاشتراك لسه ساري - لا يمكن التجديد', 'error'); return; }
+  const isPaid = m.paid === true;
+  const isExpired = exp(m.due);
+  
+  // #### منع التجديد لو الاشتراك لسه ساري ####
+  if(isPaid && !isExpired) { T('⚠️ الاشتراك لسه ساري - لا يمكن التجديد الآن', 'error'); return; }
+  
   document.getElementById('modalTitle').textContent = 'تجديد الاشتراك';
-  document.getElementById('modalBody').innerHTML = `<p style="text-align:center;color:var(--text);"><strong>${m.name}</strong></p><div class="radio-group"><div class="radio-option selected" id="renOptMonthly" onclick="selRen('monthly')">📅 شهري<span style="display:block;font-size:10px;">${m.monthlyPrice} ج.م</span></div>${G.gym.yearlyPrice ? `<div class="radio-option" id="renOptYearly" onclick="selRen('yearly')">📆 سنوي<span style="display:block;font-size:10px;">${m.yearlyPrice || G.gym.yearlyPrice} ج.م</span></div>` : ''}</div>`;
-  document.getElementById('modalFooter').innerHTML = `<button class="btn btn-success" onclick="confirmRenew()">✅ تأكيد التجديد</button><button class="btn btn-outline" onclick='memAct("${m.id}")'>رجوع</button>`;
-  G.subType = 'monthly'; openModal('gymModal');
+  document.getElementById('modalBody').innerHTML = `<p style="text-align:center;color:var(--text);"><strong>${m.name || 'بدون اسم'}</strong></p>
+    <p style="text-align:center;color:var(--text-secondary);font-size:12px;">الاشتراك الحالي: ${m.type === 'monthly' ? 'شهري' : 'سنوي'}</p>
+    <div class="radio-group">
+      <div class="radio-option ${m.type === 'monthly' ? 'selected' : ''}" id="renOptMonthly" onclick="selRen('monthly')">📅 شهري<span style="display:block;font-size:10px;">${G.gym.monthlyPrice} ج.م</span></div>
+      ${G.gym.yearlyPrice ? `<div class="radio-option ${m.type === 'yearly' ? 'selected' : ''}" id="renOptYearly" onclick="selRen('yearly')">📆 سنوي<span style="display:block;font-size:10px;">${G.gym.yearlyPrice} ج.م</span></div>` : ''}
+    </div>`;
+  document.getElementById('modalFooter').innerHTML = `<button class="btn btn-success" onclick="confirmRenew()">✅ تأكيد التجديد</button><button class="btn btn-outline" onclick="memAct('${m.id}')">رجوع</button>`;
+  G.subType = m.type || 'monthly'; 
+  openModal('gymModal');
 }
 function selRen(t) { G.subType = t; document.querySelectorAll('#modalBody .radio-option').forEach(o => o.classList.remove('selected')); document.getElementById(t === 'monthly' ? 'renOptMonthly' : 'renOptYearly').classList.add('selected'); }
 async function confirmRenew() {
-  const dd = new Date(); G.subType === 'monthly' ? dd.setDate(dd.getDate() + 30) : dd.setDate(dd.getDate() + 365);
-  await db.collection('members').doc(G.curMem.id).update({ due: dd.toISOString(), paid: true, type: G.subType });
-  closeModal('gymModal'); loadMembers(); T('تم التجديد');
+  const dd = new Date();
+  G.subType === 'monthly' ? dd.setDate(dd.getDate() + 30) : dd.setDate(dd.getDate() + 365);
+  
+  await db.collection('members').doc(G.curMem.id).update({
+    due: dd.toISOString(), 
+    paid: true, 
+    type: G.subType,
+    monthlyPrice: G.gym.monthlyPrice, 
+    yearlyPrice: G.gym.yearlyPrice,
+    start: new Date().toISOString()
+  });
+  
+  closeModal('gymModal'); 
+  loadMembers(); 
+  T('✅ تم تجديد الاشتراك بنجاح');
 }
 async function expelMem() {
-  showConfirm('طرد المشترك', `<p style="color:var(--text-secondary);">هل أنت متأكد من طرد <strong>${G.curMem.name}</strong>؟</p>`, async () => {
-    await db.collection('members').doc(G.curMem.id).update({ active: false, expelledByCoach: true, expelledAt: new Date().toISOString() });
-    closeModal('gymModal'); loadMembers(); T('تم طرد المشترك');
-  });
+  const m = G.curMem;
+  showConfirm(
+    'طرد المشترك', 
+    `<p style="color:var(--text-secondary);">هل أنت متأكد من طرد <strong>${m.name || 'بدون اسم'}</strong>؟</p>
+     <p style="color:var(--danger);font-size:12px;">⚠️ سيتم احتسابها كرفض للمشترك (من الـ 5 رفضات المسموحة)</p>`, 
+    async () => {
+      // #### تحديث العضوية ####
+      await db.collection('members').doc(m.id).update({ 
+        active: false, 
+        leftByUser: false,
+        expelledByCoach: true, 
+        expelledAt: new Date().toISOString(),
+        paid: false
+      });
+      
+      // #### إضافة سجل رفض (يحتسب من الـ 5) ####
+      await db.collection('requests').add({
+        gymId: G.gid,
+        gymName: G.gym.name,
+        name: m.name || 'بدون اسم',
+        phone: m.phone || '',
+        subType: m.type || 'monthly',
+        status: 'rejected',
+        reason: 'expelled_by_coach',
+        created: new Date().toISOString()
+      });
+      
+      closeModal('gymModal'); 
+      loadMembers(); 
+      T('تم طرد المشترك (تم احتساب رفض)', 'warning');
+    }
+  );
 }
+
 async function showAddMember() {
   document.getElementById('modalTitle').textContent = 'إضافة مشترك';
-  document.getElementById('modalBody').innerHTML = `<div class="form-group"><label>الاسم *</label><input type="text" id="addMemName" class="form-control"></div><div class="form-group"><label>الهاتف *</label><input type="tel" id="addMemPhone" class="form-control"></div><div class="form-group"><label>النوع</label><select id="addMemType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div><div class="form-group"><label>تاريخ الدفع</label><input type="date" id="addMemDate" class="form-control"></div>`;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="form-group"><label>الاسم *</label><input type="text" id="addMemName" class="form-control"></div>
+    <div class="form-group"><label>الهاتف *</label><input type="tel" id="addMemPhone" class="form-control"></div>
+    <div class="form-group"><label>النوع</label><select id="addMemType" class="form-control"><option value="monthly">شهري (30 يوم)</option><option value="yearly">سنوي (365 يوم)</option></select></div>
+    <div class="form-group"><label>تاريخ الدفع</label><input type="date" id="addMemDate" class="form-control"></div>`;
   document.getElementById('modalFooter').innerHTML = '<button class="btn btn-success" onclick="addMem()">➕ إضافة</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>';
-  document.getElementById('addMemDate').value = new Date().toISOString().split('T')[0]; openModal('gymModal');
+  document.getElementById('addMemDate').value = new Date().toISOString().split('T')[0]; 
+  openModal('gymModal');
 }
 async function addMem() {
-  const n = document.getElementById('addMemName').value.trim(), p = document.getElementById('addMemPhone').value.trim(), t = document.getElementById('addMemType').value, d = document.getElementById('addMemDate').value;
-  if(!n || !p) { T('اكتب البيانات', 'error'); return; }
-  const dupSnap = await db.collection('members').where('gymId', '==', G.gid).where('phone', '==', p).where('active', '==', true).where('leftByUser', '==', false).get();
+  const n = document.getElementById('addMemName').value.trim(), 
+        p = document.getElementById('addMemPhone').value.trim(), 
+        t = document.getElementById('addMemType').value, 
+        d = document.getElementById('addMemDate').value;
+        
+  if(!n || !p) { T('اكتب البيانات كاملة (الاسم والهاتف)', 'error'); return; }
+  
+  const dupSnap = await db.collection('members')
+    .where('gymId', '==', G.gid)
+    .where('phone', '==', p)
+    .where('active', '==', true)
+    .where('leftByUser', '==', false)
+    .get();
+    
   if(!dupSnap.empty) { T('⚠️ هذا الرقم موجود بالفعل كمشترك نشط', 'error'); return; }
-  const dd = new Date(d); t === 'monthly' ? dd.setDate(dd.getDate() + 30) : dd.setDate(dd.getDate() + 365);
-  await db.collection('members').add({ gymId: G.gid, gymName: G.gym.name, name: n, phone: p, type: t, start: new Date(d).toISOString(), due: dd.toISOString(), monthlyPrice: G.gym.monthlyPrice, yearlyPrice: G.gym.yearlyPrice, paid: true, active: true, isManual: true, created: new Date().toISOString() });
-  closeModal('gymModal'); loadMembers(); T('تم إضافة المشترك');
+  
+  // #### حساب تاريخ الانتهاء: +30 يوم للشهري، +365 يوم للسنوي ####
+  const startDate = new Date(d);
+  const dueDate = new Date(startDate);
+  
+  if(t === 'monthly') {
+    dueDate.setDate(dueDate.getDate() + 30);
+  } else {
+    dueDate.setDate(dueDate.getDate() + 365);
+  }
+  
+  const memberData = {
+    gymId: G.gid,
+    gymName: G.gym.name,
+    name: n,
+    phone: p,
+    type: t,
+    start: startDate.toISOString(),
+    due: dueDate.toISOString(),
+    monthlyPrice: G.gym.monthlyPrice,
+    yearlyPrice: G.gym.yearlyPrice,
+    paid: true,
+    active: true,
+    leftByUser: false,
+    isManual: true,
+    created: new Date().toISOString()
+  };
+  
+  await db.collection('members').add(memberData);
+  closeModal('gymModal'); 
+  loadMembers(); 
+  T('✅ تم إضافة المشترك بنجاح');
 }
 
 // ==================== SESSIONS (LocalStorage) ====================
@@ -518,42 +776,176 @@ function addSess() {
   saveSessions(ss); closeModal('gymModal'); loadSessions(); T('تم تسجيل الحصة');
 }
 
-function logoutCoach() { sessionStorage.removeItem('coachId'); G.gym = null; G.gid = null; goTo('home'); }
+function logoutCoach() {
+  if(reqListener && G.gid) { rtdb.ref('newRequests/' + G.gid).off('value', reqListener); reqListener = null; }
+  sessionStorage.removeItem('coachId'); G.gym = null; G.gid = null; goTo('home');
+}
 
 // ==================== ADMIN ====================
 async function loadAdmin() {
-  const snap = await db.collection('gyms').get(); const gs = []; snap.forEach(doc => gs.push({ id: doc.id, ...doc.data() }));
-  const total = gs.length, act = gs.filter(g => g.active && !exp(g.subEnd)).length, expiring = gs.filter(g => g.active && g.subEnd && daysR(g.subEnd) <= 3 && daysR(g.subEnd) > 0).length;
-  document.getElementById('adminContent').innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;"><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);">${total}</div><div style="font-size:11px;">جيم</div></div><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--success);">${act}</div><div style="font-size:11px;">نشط</div></div><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:${expiring > 0 ? 'var(--danger)' : 'var(--gray)'};">${expiring}</div><div style="font-size:11px;">قريب الانتهاء</div></div></div><div style="display:flex;justify-content:space-between;margin-bottom:10px;"><h3 style="color:var(--text);">الجيمات</h3><button class="btn btn-primary btn-sm" onclick="newGym()">+ جيم</button></div>${gs.map(g => { const ok = g.active && !exp(g.subEnd); const r = daysR(g.subEnd) || 0; return `<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;box-shadow:var(--shadow);"><div style="display:flex;justify-content:space-between;"><strong style="color:var(--text);">${g.name}</strong><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${ok ? '#D4EDDA' : '#F8D7DA'};color:${ok ? '#155724' : '#721C24'};">${ok ? 'نشط' : 'منتهي'}</span></div><div style="color:var(--text-secondary);font-size:11px;margin:3px 0;">🔑 ${g.redeemCode} | متبقي ${r} يوم</div><div style="display:flex;gap:4px;"><button class="btn btn-success btn-sm" onclick='renGym("${g.id}")'>تجديد</button><button class="btn ${g.active ? 'btn-danger' : 'btn-success'} btn-sm" onclick='togGym("${g.id}")'>${g.active ? 'تعطيل' : 'تفعيل'}</button></div></div>`; }).join('')}`;
+  const snap = await db.collection('gyms').get(); 
+  const gs = []; snap.forEach(doc => gs.push({ id: doc.id, ...doc.data() }));
+  const total = gs.length, 
+        act = gs.filter(g => g.active && !exp(g.subEnd)).length, 
+        expiring = gs.filter(g => g.active && g.subEnd && daysR(g.subEnd) <= 3 && daysR(g.subEnd) > 0).length;
+        
+  document.getElementById('adminContent').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+      <div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);">${total}</div><div style="font-size:11px;">جيم</div></div>
+      <div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--success);">${act}</div><div style="font-size:11px;">نشط</div></div>
+      <div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:${expiring > 0 ? 'var(--danger)' : 'var(--gray)'};">${expiring}</div><div style="font-size:11px;">قريب الانتهاء</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+      <h3 style="color:var(--text);">الجيمات</h3>
+      <button class="btn btn-primary btn-sm" onclick="newGym()">+ جيم</button>
+    </div>
+    ${gs.map(g => { 
+      const ok = g.active && !exp(g.subEnd); 
+      const r = daysR(g.subEnd) || 0; 
+      return `<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;box-shadow:var(--shadow);">
+        <div style="display:flex;justify-content:space-between;">
+          <strong style="color:var(--text);">${g.name}</strong>
+          <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${ok ? '#D4EDDA' : '#F8D7DA'};color:${ok ? '#155724' : '#721C24'};">${ok ? 'نشط' : 'منتهي'}</span>
+        </div>
+        <div style="color:var(--text-secondary);font-size:11px;margin:3px 0;">🔑 ${g.redeemCode} | متبقي ${r} يوم</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" onclick='renGym("${g.id}")'>تجديد</button>
+          <button class="btn ${g.active ? 'btn-danger' : 'btn-success'} btn-sm" onclick='togGym("${g.id}")'>${g.active ? 'تعطيل' : 'تفعيل'}</button>
+          <button class="btn btn-outline btn-sm" onclick='editRedeemCode("${g.id}","${g.redeemCode}")'>🔑 تعديل الكود</button>
+          <button class="btn btn-danger btn-sm" onclick='deleteGym("${g.id}","${g.name}")'>🗑️ حذف</button>
+        </div>
+      </div>`;
+    }).join('')}`;
 }
-function newGym() { document.getElementById('modalTitle').textContent = 'جيم جديد'; document.getElementById('modalBody').innerHTML = `<div class="form-group"><label>الاسم</label><input type="text" id="ngName" class="form-control"></div><div class="form-group"><label>الكود</label><input type="text" id="ngCode" class="form-control" style="text-transform:uppercase;"></div><div class="row"><div class="form-group"><label>النوع</label><select id="ngType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div><div class="form-group"><label>تاريخ البداية</label><input type="date" id="ngDate" class="form-control"></div></div>`; document.getElementById('modalFooter').innerHTML = '<button class="btn btn-primary" onclick="createGym()">إنشاء</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; document.getElementById('ngDate').value = new Date().toISOString().split('T')[0]; openModal('gymModal'); }
+
+function newGym() { 
+  document.getElementById('modalTitle').textContent = 'جيم جديد'; 
+  document.getElementById('modalBody').innerHTML = `
+    <div class="form-group"><label>الاسم</label><input type="text" id="ngName" class="form-control"></div>
+    <div class="form-group"><label>الكود</label><input type="text" id="ngCode" class="form-control" style="text-transform:uppercase;"></div>
+    <div class="row">
+      <div class="form-group"><label>النوع</label><select id="ngType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div>
+      <div class="form-group"><label>تاريخ البداية</label><input type="date" id="ngDate" class="form-control"></div>
+    </div>`; 
+  document.getElementById('modalFooter').innerHTML = '<button class="btn btn-primary" onclick="createGym()">إنشاء</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; 
+  document.getElementById('ngDate').value = new Date().toISOString().split('T')[0]; 
+  openModal('gymModal'); 
+}
+
 async function createGym() {
-  const n = document.getElementById('ngName').value.trim(), co = document.getElementById('ngCode').value.trim().toUpperCase(), t = document.getElementById('ngType').value, d = document.getElementById('ngDate').value;
+  const n = document.getElementById('ngName').value.trim(), 
+        co = document.getElementById('ngCode').value.trim().toUpperCase(), 
+        t = document.getElementById('ngType').value, 
+        d = document.getElementById('ngDate').value;
   if(!n || !co) { T('اكتب البيانات', 'error'); return; }
   const snap = await db.collection('gyms').where('redeemCode', '==', co).get();
   if(!snap.empty) { T('الكود مستخدم', 'error'); return; }
   const dd = new Date(d); t === 'monthly' ? dd.setDate(dd.getDate() + 30) : dd.setDate(dd.getDate() + 365);
-  await db.collection('gyms').add({ name: n, redeemCode: co, active: true, images: [], monthlyPrice: 0, yearlyPrice: null, sessionPrice: 0, offerPrice: null, phones: [], location: '', notes: '', subType: t, subStart: new Date(d).toISOString(), subEnd: dd.toISOString(), created: new Date().toISOString() });
+  await db.collection('gyms').add({ 
+    name: n, redeemCode: co, active: true, images: [], monthlyPrice: 0, yearlyPrice: null, 
+    sessionPrice: 0, offerPrice: null, phones: [], location: '', notes: '', subType: t, 
+    subStart: new Date(d).toISOString(), subEnd: dd.toISOString(), created: new Date().toISOString() 
+  });
   closeModal('gymModal'); loadAdmin(); T('تم إنشاء الجيم');
 }
-function renGym(id) { G.renGym = id; document.getElementById('modalTitle').textContent = 'تجديد'; document.getElementById('modalBody').innerHTML = `<div class="form-group"><label>النوع</label><select id="renType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div><div class="form-group"><label>تاريخ البداية</label><input type="date" id="renDate" class="form-control"></div>`; document.getElementById('modalFooter').innerHTML = '<button class="btn btn-success" onclick="doRenew()">تأكيد</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; document.getElementById('renDate').value = new Date().toISOString().split('T')[0]; openModal('gymModal'); }
+
+function editRedeemCode(gid, currentCode) {
+  document.getElementById('modalTitle').textContent = 'تعديل كود الجيم';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="form-group"><label>الكود الحالي</label><input type="text" class="form-control" value="${currentCode}" disabled style="background:var(--light);color:var(--gray);"></div>
+    <div class="form-group"><label>الكود الجديد</label><input type="text" id="editRedeemCode" class="form-control" style="text-transform:uppercase;" value=""></div>
+    <p style="font-size:11px;color:var(--text-secondary);">الكود الجديد لازم يكون فريد (مش مستخدم لجيم تاني)</p>`;
+  document.getElementById('modalFooter').innerHTML = `
+    <button class="btn btn-primary" onclick='saveRedeemCode("${gid}")'>💾 حفظ الكود الجديد</button>
+    <button class="btn btn-outline" onclick="closeModal('gymModal')">إلغاء</button>`;
+  openModal('gymModal');
+}
+
+async function saveRedeemCode(gid) {
+  const newCode = document.getElementById('editRedeemCode').value.trim().toUpperCase();
+  if(!newCode) { T('اكتب الكود الجديد', 'error'); return; }
+  const snap = await db.collection('gyms').where('redeemCode', '==', newCode).get();
+  if(!snap.empty && snap.docs[0].id !== gid) { T('⚠️ الكود مستخدم لجيم آخر', 'error'); return; }
+  await db.collection('gyms').doc(gid).update({ redeemCode: newCode });
+  closeModal('gymModal'); loadAdmin(); T('✅ تم تحديث الكود بنجاح');
+}
+
+function deleteGym(gid, gname) {
+  showConfirm(
+    '🗑️ حذف الجيم',
+    `<div style="text-align:center;padding:10px;">
+      <i class="fas fa-exclamation-triangle" style="font-size:40px;color:var(--danger);margin-bottom:10px;"></i>
+      <h3 style="color:var(--text);">هل أنت متأكد من حذف جيم:</h3>
+      <h4 style="color:var(--primary);margin:10px 0;">"${gname}"</h4>
+      <p style="color:var(--danger);font-size:13px;">⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
+      <p style="color:var(--text-secondary);font-size:11px;">سيتم حذف جميع بيانات الجيم بما فيها المشتركين والطلبات المرتبطة به.</p>
+    </div>`,
+    async () => {
+      T('⏳ جاري حذف الجيم...', 'warning');
+      try {
+        const memSnap = await db.collection('members').where('gymId', '==', gid).get();
+        const memBatch = db.batch();
+        memSnap.forEach(doc => memBatch.delete(doc.ref));
+        await memBatch.commit();
+        
+        const reqSnap = await db.collection('requests').where('gymId', '==', gid).get();
+        const reqBatch = db.batch();
+        reqSnap.forEach(doc => reqBatch.delete(doc.ref));
+        await reqBatch.commit();
+        
+        await db.collection('gyms').doc(gid).delete();
+        loadAdmin(); T('✅ تم حذف الجيم وجميع بياناته بنجاح');
+      } catch(e) {
+        T('❌ حدث خطأ أثناء الحذف', 'error');
+      }
+    }
+  );
+}
+
+function renGym(id) { 
+  G.renGym = id; 
+  document.getElementById('modalTitle').textContent = 'تجديد'; 
+  document.getElementById('modalBody').innerHTML = `
+    <div class="form-group"><label>النوع</label><select id="renType" class="form-control"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div>
+    <div class="form-group"><label>تاريخ البداية</label><input type="date" id="renDate" class="form-control"></div>`; 
+  document.getElementById('modalFooter').innerHTML = '<button class="btn btn-success" onclick="doRenew()">تأكيد</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>'; 
+  document.getElementById('renDate').value = new Date().toISOString().split('T')[0]; 
+  openModal('gymModal'); 
+}
+
 async function doRenew() {
   const t = document.getElementById('renType').value, d = document.getElementById('renDate').value;
   const dd = new Date(d); t === 'monthly' ? dd.setDate(dd.getDate() + 30) : dd.setDate(dd.getDate() + 365);
   await db.collection('gyms').doc(G.renGym).update({ subType: t, subStart: new Date(d).toISOString(), subEnd: dd.toISOString(), active: true });
   closeModal('gymModal'); loadAdmin(); T('تم التجديد');
 }
-async function togGym(id) { const snap = await db.collection('gyms').doc(id).get(); const g = snap.data(); await db.collection('gyms').doc(id).update({ active: !g.active }); loadAdmin(); T(g.active ? 'تم التعطيل' : 'تم التفعيل'); }
+
+async function togGym(id) { 
+  const snap = await db.collection('gyms').doc(id).get(); 
+  const g = snap.data(); 
+  await db.collection('gyms').doc(id).update({ active: !g.active }); 
+  loadAdmin(); 
+  T(g.active ? 'تم التعطيل' : 'تم التفعيل'); 
+}
+
 function logoutAdmin() { sessionStorage.removeItem('admin'); goTo('home'); }
 
 // ==================== INIT ====================
 (async function() {
-  if(localStorage.getItem('darkMode') === '1') { document.body.classList.add('dark'); document.querySelectorAll('.btn-icon-only i').forEach(i => i.className = 'fas fa-sun'); }
+  if(localStorage.getItem('darkMode') === '1') { 
+    document.body.classList.add('dark'); 
+    document.querySelectorAll('.btn-icon-only i').forEach(i => i.className = 'fas fa-sun'); 
+  }
   if(sessionStorage.getItem('admin') === '1') { goTo('admin'); loadAdmin(); return; }
   const cid = sessionStorage.getItem('coachId');
   if(cid) {
     const snap = await db.collection('gyms').doc(cid).get();
-    if(snap.exists && snap.data().active) { G.gym = { id: snap.id, ...snap.data() }; G.gid = snap.id; document.getElementById('coachTitle').textContent = G.gym.name; goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount(); return; }
+    if(snap.exists && snap.data().active) { 
+      G.gym = { id: snap.id, ...snap.data() }; 
+      G.gid = snap.id; 
+      document.getElementById('coachTitle').textContent = G.gym.name; 
+      goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount(); return; 
+    }
     sessionStorage.removeItem('coachId');
   }
   goTo('home'); loadGyms();
