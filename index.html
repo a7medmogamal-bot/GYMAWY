@@ -332,18 +332,15 @@ async function registerUser(fn, ph, un, pw, pwc, email) {
   if(!email || !email.includes('@')) { T('<i class="fas fa-times-circle"></i> بريد إلكتروني صحيح مطلوب', 'error'); return false; }
   
   try {
-    // التحقق من username
     const userSnap = await db.collection('users').doc(un).get();
     if(userSnap.exists) { T('<i class="fas fa-times-circle"></i> username مستخدم بالفعل', 'error'); return false; }
     
-    // التحقق من الإيميل في الحسابات المفعلة
     const emailSnap = await db.collection('users').where('email','==',email).where('emailVerified','==',true).get();
     if(!emailSnap.empty) { T('<i class="fas fa-times-circle"></i> البريد مستخدم بالفعل في حساب مفعل', 'error'); return false; }
     
     const passHash = CryptoJS.SHA256(pw).toString();
     const code = generateCode();
     
-    // حفظ المستخدم مؤقتاً في localStorage (مش في Firestore)
     const tempUser = {
       fullName: fn, phone: ph, username: un, passHash: passHash,
       email: email, emailCode: code,
@@ -351,10 +348,8 @@ async function registerUser(fn, ph, un, pw, pwc, email) {
     };
     localStorage.setItem('pendingUser_' + un, JSON.stringify(tempUser));
     
-    // إرسال الكود
     sendEmail(email, code);
     
-    // حفظ بيانات الجلسة مؤقتاً
     G.currentUser = { fullName: fn, phone: ph, username: un, email: email, emailVerified: false, pendingActivation: true };
     localStorage.setItem('userAuth', JSON.stringify(G.currentUser));
     
@@ -369,7 +364,6 @@ async function loginUser(un, pw) {
   if(!pw) { T('<i class="fas fa-times-circle"></i> كلمة المرور مطلوبة', 'error'); return false; }
   
   try {
-    // التحقق من المستخدمين المؤقتين أولاً
     const pendingUser = localStorage.getItem('pendingUser_' + un);
     if(pendingUser) {
       const pu = JSON.parse(pendingUser);
@@ -477,7 +471,6 @@ async function loadProfile() {
     return;
   }
   
-  // لو الحساب لسه مش مفعل
   if(!G.currentUser.emailVerified) {
     c.innerHTML = `<div class="form-card" style="text-align:center;">
       <i class="fas fa-user-circle" style="font-size:50px;color:var(--primary);margin-bottom:12px;"></i>
@@ -495,7 +488,6 @@ async function loadProfile() {
     return;
   }
   
-  // الحساب مفعل - show full profile
   const mSnap = await db.collection('members').where('phone','==',G.currentUser.phone||'').get();
   const members = []; mSnap.forEach(function(doc){ members.push({ id:doc.id, ...doc.data() }); });
   const active = members.filter(function(m){ return m.active && !m.leftByUser; });
@@ -542,20 +534,17 @@ async function verifyCode() {
   
   const un = G.currentUser.username;
   
-  // لو مستخدم مؤقت (لم يحفظ في Firestore بعد)
   const pendingUser = localStorage.getItem('pendingUser_' + un);
   if(pendingUser) {
     const pu = JSON.parse(pendingUser);
     if(pu.emailCode !== code) { T('<i class="fas fa-times-circle"></i> كود غير صحيح', 'error'); return; }
     
-    // حفظ المستخدم في Firestore
     await db.collection('users').doc(un).set({
       fullName: pu.fullName, phone: pu.phone, username: un, passHash: pu.passHash,
       email: pu.email, emailVerified: true, emailCode: null,
       createdAt: pu.createdAt
     });
     
-    // حذف المستخدم المؤقت
     localStorage.removeItem('pendingUser_' + un);
     
     G.currentUser.emailVerified = true;
@@ -568,7 +557,6 @@ async function verifyCode() {
     return;
   }
   
-  // لو مستخدم موجود في Firestore لكن غير مفعل
   const snap = await db.collection('users').doc(un).get();
   if(!snap.exists) { T('خطأ في الحساب', 'error'); return; }
   const data = snap.data();
@@ -690,7 +678,7 @@ async function confirmSub(){
   closeModal('gymModal');T('<i class="fas fa-check-circle"></i> تم إرسال الطلب');
 }
 
-// ==================== COACH (مختصر) ====================
+// ==================== COACH ====================
 async function checkCode(){const code=document.getElementById('redeemCode').value.trim().toUpperCase();if(code===ADMIN_CODE){openModal('passcodeModal');return;}const snap=await db.collection('gyms').where('redeemCode','==',code).get();if(snap.empty){T('الكود غير صحيح','error');return;}const doc=snap.docs[0];G.gym={id:doc.id,...doc.data()};G.gid=doc.id;if(!G.gym.active||exp(G.gym.subEnd)){T('الجيم غير مفعل أو الاشتراك منتهي','error');return;}const r=daysR(G.gym.subEnd);if(r<=3&&r>0){T('<i class="fas fa-exclamation-triangle"></i> متبقي '+r+' '+getDayLabel(r)+' على انتهاء اشتراك الجيم','warning');}localStorage.setItem('coachId',G.gid);document.getElementById('coachTitle').textContent=G.gym.name;document.getElementById('redeemCode').value='';goTo('coach');loadGymForm();renderPhones();renderImages();loadReqCount();if(reqListener)rtdb.ref('newRequests/'+G.gid).off('value',reqListener);reqListener=function(snap){if(snap.val()){T('طلب جديد!','warning');loadReqCount();rtdb.ref('newRequests/'+G.gid).remove();}};rtdb.ref('newRequests/'+G.gid).on('value',reqListener);}
 function getDayLabel(n){if(n===1)return 'يوم';if(n===2)return 'يومان';return 'أيام';}
 async function verifyPass(){let v='';for(let i=1;i<=6;i++)v+=document.getElementById('pc'+i).value;if(CryptoJS.SHA256(v).toString()===PASS_HASH){closeModal('passcodeModal');localStorage.setItem('admin','1');for(let i=1;i<=6;i++)document.getElementById('pc'+i).value='';goTo('admin');loadAdmin();}else T('كلمة مرور غير صحيحة','error');}
@@ -743,7 +731,6 @@ function logoutAdmin(){localStorage.removeItem('admin');goTo('home');}
 (function(){
   if(localStorage.getItem('darkMode')==='1'){document.body.classList.add('dark');}
   
-  // تحميل بيانات المستخدم من localStorage
   const userAuth = localStorage.getItem('userAuth');
   if(userAuth){ try { G.currentUser = JSON.parse(userAuth); } catch(e) { G.currentUser = null; } }
   
@@ -754,7 +741,6 @@ function logoutAdmin(){localStorage.removeItem('admin');goTo('home');}
   if(coachId){ db.collection('gyms').doc(coachId).get().then(function(snap){ if(snap.exists&&snap.data().active){ G.gym={id:snap.id,...snap.data()}; G.gid=snap.id; if(!G.currentUser) G.currentUser={fullName:'Coach',username:'COACH',phone:''}; document.getElementById('coachTitle').textContent=G.gym.name; goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount(); const r=daysR(G.gym.subEnd); if(r<=3&&r>0){ setTimeout(function(){ T('<i class="fas fa-exclamation-triangle"></i> متبقي '+r+' '+getDayLabel(r)+' على انتهاء اشتراك الجيم','warning'); },500); } } else { localStorage.removeItem('coachId'); goTo('home'); } }); return; }
   
   goTo('home');
-  if(G.currentUser) { goTo('profile'); }
 })();
 </script>
 
