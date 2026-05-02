@@ -3,7 +3,7 @@
 
   <head>
     <meta charset="UTF-8">
-    <title>GYMAWY</title>
+    <title>Gymawy | جيماوي</title>
     
 
   </head>
@@ -15,7 +15,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#6C5CE7">
-  <title>Gymawy | جيماوي</title>
+  <title>Gymawy | جيماوي - منصة الجيمات الذكية</title>
+  <meta name="description" content="Gymawy | جيماوي - منصة الجيمات الذكية في مصر. تصفح أفضل الجيمات، اشترك، وتابع مواعيد اشتراكك بسهولة.">
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -179,6 +180,23 @@
 
     .verify-hint { color: var(--danger); font-size: 11px; margin-top: 4px; cursor: pointer; text-decoration: underline; display: block; }
 
+    .sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; }
+    .sidebar-overlay.active { display: block; }
+    .sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100vh; background: var(--card); z-index: 2001; transition: right 0.3s; box-shadow: -5px 0 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+    .sidebar.active { right: 0; }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-header h3 { color: var(--primary); }
+    .sidebar-close { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--light); cursor: pointer; }
+    .sidebar-menu { padding: 10px; flex: 1; }
+    .sidebar-item { padding: 14px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text); transition: all 0.2s; }
+    .sidebar-item:hover { background: var(--light); }
+
+    .offline-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; }
+    .offline-overlay.active { display: flex; }
+    .offline-popup { background: var(--card); border-radius: var(--radius); padding: 30px 25px; text-align: center; width: 90%; max-width: 350px; box-shadow: var(--shadow-lg); }
+    .offline-popup h3 { color: var(--text); margin-bottom: 8px; font-size: 18px; }
+    .offline-popup p { color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; }
+
     @media (max-width: 400px) {
       .members-table-header, .members-table-row { grid-template-columns: 1.2fr 0.8fr 0.8fr 0.6fr; font-size: 10px; padding: 8px 6px; }
       .sub-cards { grid-template-columns: 1fr; }
@@ -189,12 +207,28 @@
 </head>
 <body>
 
+<!-- القائمة الجانبية -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h3>Gymawy | جيماوي</h3>
+    <button class="sidebar-close" onclick="closeSidebar()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="sidebar-menu">
+    <div class="sidebar-item" onclick="goTo('about');closeSidebar();"><i class="fas fa-info-circle"></i> عن التطبيق</div>
+    <div class="sidebar-item" onclick="goTo('how');closeSidebar();"><i class="fas fa-play-circle"></i> كيف يعمل</div>
+    <div class="sidebar-item" onclick="goTo('faq');closeSidebar();"><i class="fas fa-question-circle"></i> أسئلة شائعة</div>
+    <div class="sidebar-item" onclick="goTo('privacy');closeSidebar();"><i class="fas fa-shield-alt"></i> سياسة الخصوصية</div>
+    <div class="sidebar-item" onclick="goTo('download');closeSidebar();"><i class="fas fa-download"></i> تحميل التطبيق</div>
+  </div>
+</div>
+
 <!-- الصفحة الرئيسية -->
 <div class="page active" id="homePage">
   <div class="header">
-    <div class="header-logo"><i class="fas fa-dumbbell"></i> Gymawy</div>
+    <button class="btn-icon-only" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
     <div class="header-actions">
-      <button class="btn-icon-only" onclick="toggleDark()"><i class="fas fa-moon"></i></button>
+      <button class="btn-icon-only theme-btn" onclick="toggleDark()"><i class="fas fa-moon theme-icon"></i></button>
       <button class="btn-header" onclick="goTo('myReq')"><i class="fas fa-clock"></i> طلباتي</button>
       <button class="btn-header" onclick="goTo('profile')"><i class="fas fa-user"></i> حسابي</button>
     </div>
@@ -208,16 +242,8 @@
         <div class="main-card-arrow"><i class="fas fa-arrow-left"></i></div>
       </div>
       <div class="sub-cards">
-        <div class="sub-card locked" onclick="T('المكملات - ستتوفر قريباً','warning')">
-          <i class="fas fa-capsules"></i>
-          <h4>المكملات</h4>
-          <span class="locked-badge"><i class="fas fa-lock"></i> قريباً</span>
-        </div>
-        <div class="sub-card locked" onclick="T('مدرب برايفت - ستتوفر قريباً','warning')">
-          <i class="fas fa-user-tie"></i>
-          <h4>مدرب برايفت</h4>
-          <span class="locked-badge"><i class="fas fa-lock"></i> قريباً</span>
-        </div>
+        <div class="sub-card locked" onclick="T('المكملات - ستتوفر قريباً','warning')"><i class="fas fa-capsules"></i><h4>المكملات</h4><span class="locked-badge"><i class="fas fa-lock"></i> قريباً</span></div>
+        <div class="sub-card locked" onclick="T('مدرب برايفت - ستتوفر قريباً','warning')"><i class="fas fa-user-tie"></i><h4>مدرب برايفت</h4><span class="locked-badge"><i class="fas fa-lock"></i> قريباً</span></div>
       </div>
     </div>
     <div style="text-align:center;margin-top:16px;">
@@ -227,17 +253,7 @@
 </div>
 
 <!-- صفحة الجيمات -->
-<div class="page" id="gymsListPage">
-  <div class="header">
-    <button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button>
-    <h2>الجيمات</h2>
-    <div></div>
-  </div>
-  <div class="container">
-    <div class="search-box"><i class="fas fa-search" style="color:var(--gray-light);"></i><input type="text" id="searchInput" placeholder="ابحث عن جيم..." oninput="loadGyms()"></div>
-    <div id="gymsList"><div class="loading-spinner"><i class="fas fa-spinner"></i><p>جاري تحميل الجيمات...</p></div></div>
-  </div>
-</div>
+<div class="page" id="gymsListPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>الجيمات</h2><div></div></div><div class="container"><div class="search-box"><i class="fas fa-search" style="color:var(--gray-light);"></i><input type="text" id="searchInput" placeholder="ابحث عن جيم..." oninput="loadGyms()"></div><div id="gymsList"><div class="loading-spinner"><i class="fas fa-spinner"></i><p>جاري تحميل الجيمات...</p></div></div></div></div>
 
 <!-- طلباتي -->
 <div class="page" id="myReqPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>طلباتي</h2><div></div></div><div class="container" id="myReqContent"></div></div>
@@ -248,36 +264,41 @@
 <!-- دخول الكوتش -->
 <div class="page" id="redeemPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>دخول الكوتش</h2><div></div></div><div class="container" style="display:flex;align-items:center;justify-content:center;min-height:65vh;"><div class="redeem-card"><i class="fas fa-key"></i><h2>أدخل الكود</h2><input type="text" id="redeemCode" class="form-control" placeholder="GYM2026XX" autocomplete="off"><button class="btn btn-primary" onclick="checkCode()"><i class="fas fa-sign-in-alt"></i> دخول</button></div></div></div>
 
-<!-- صفحة الكوتش -->
-<div class="page" id="coachPage">
-  <div class="header"><h2 id="coachTitle">Gymawy</h2><div class="header-actions"><button class="btn-icon-only" onclick="toggleDark()"><i class="fas fa-moon"></i></button><button class="btn-header" onclick="logoutCoach()"><i class="fas fa-sign-out-alt"></i> خروج</button></div></div>
-  <div class="container">
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('gym')"><i class="fas fa-building"></i> الجيم</button>
-      <button class="tab-btn" onclick="switchTab('requests')"><i class="fas fa-bell"></i> الطلبات <span id="reqBadge" style="display:none;background:var(--danger);color:white;padding:2px 8px;border-radius:10px;font-size:10px;">0</span></button>
-      <button class="tab-btn" onclick="switchTab('members')"><i class="fas fa-users"></i> المشتركين</button>
-      <button class="tab-btn" onclick="switchTab('sessions')"><i class="fas fa-calendar"></i> الحصص</button>
-      <button class="tab-btn" onclick="switchTab('stats')"><i class="fas fa-chart-bar"></i> الإحصائيات</button>
-    </div>
-    <div class="tab-content active" id="tab-gym"><div class="form-card"><h3><i class="fas fa-edit"></i> بيانات الجيم</h3><div class="form-group"><label>اسم الجيم</label><input type="text" id="gymName" class="form-control"></div><div class="form-group"><label>صور الجيم</label><div class="images-grid" id="imagesGrid"></div><input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="uploadGymImages(this)"></div><div class="row"><div class="form-group"><label>سعر الشهر</label><input type="number" id="monthlyPrice" class="form-control"></div><div class="form-group"><label>سعر السنة</label><input type="number" id="yearlyPrice" class="form-control"></div></div><div class="row"><div class="form-group"><label>سعر الحصة</label><input type="number" id="sessionPrice" class="form-control"></div><div class="form-group"><label>عرض خاص</label><input type="number" id="offerPrice" class="form-control"></div></div><div class="row"><div class="form-group"><label>يفتح الساعة</label><input type="time" id="openTime" class="form-control"></div><div class="form-group"><label>يقفل الساعة</label><input type="time" id="closeTime" class="form-control"></div></div><div class="form-group"><label>أرقام التواصل</label><div class="phones-list" id="phonesList"></div><div class="add-phone-btn" onclick="addPhoneField()"><i class="fas fa-plus"></i> إضافة رقم</div></div><div class="form-group"><label>الموقع</label><input type="text" id="gymLoc" class="form-control"></div><div class="form-group"><label>ملاحظات</label><textarea id="gymNotes" class="form-control" rows="2"></textarea></div><button class="btn btn-primary" onclick="saveGym()"><i class="fas fa-save"></i> حفظ</button></div></div>
-    <div class="tab-content" id="tab-requests"><div id="requestsList"></div></div>
-    <div class="tab-content" id="tab-members"><button class="btn btn-success btn-sm" onclick="showAddMember()" style="margin-bottom:8px;"><i class="fas fa-plus"></i> إضافة مشترك</button><input type="text" id="memberSearchInput" class="form-control" placeholder="بحث عن مشترك..." oninput="loadMembers()" style="margin-bottom:8px;"><div id="membersList"></div></div>
-    <div class="tab-content" id="tab-sessions"><div class="form-group"><label>تاريخ</label><input type="date" id="sessionDate" class="form-control" onchange="loadSessions()"></div><div style="display:flex;gap:8px;margin-bottom:8px;"><div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessCount">0</div><div>حصص</div></div><div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessTotal">0 ج.م</div><div>إجمالي</div></div></div><button class="btn btn-primary btn-sm" onclick="showAddSession()" style="margin-bottom:8px;"><i class="fas fa-plus"></i> حصة</button><div id="sessionsList"></div></div>
-    <div class="tab-content" id="tab-stats"><div id="statsContent"><div class="loading-spinner"><i class="fas fa-spinner"></i></div></div></div>
-  </div>
+<!-- عن التطبيق -->
+<div class="page" id="aboutPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>عن التطبيق</h2><div></div></div><div class="container"><div class="form-card" style="text-align:center;"><i class="fas fa-dumbbell" style="font-size:50px;color:var(--primary);margin-bottom:12px;"></i><h2>Gymawy | جيماوي</h2><p style="color:var(--text-secondary);">منصة الجيمات الذكية في مصر</p></div><div class="form-card"><h3><i class="fas fa-bullseye"></i> هدفنا</h3><p>نسهل على كل شاب مصري الوصول لأفضل جيم قريب منه. بدون لف ودوران، بدون ما تضطر تروح وتسأل بنفسك. كل حاجة عندك في التطبيق.</p></div><div class="form-card"><h3><i class="fas fa-star"></i> ليه تختار جيماوي؟</h3><ul style="list-style:none;padding:0;"><li style="padding:8px 0;border-bottom:1px solid var(--border);"><i class="fas fa-check-circle" style="color:var(--success);"></i> تصفح كل الجيمات القريبة منك في مكان واحد</li><li style="padding:8px 0;border-bottom:1px solid var(--border);"><i class="fas fa-check-circle" style="color:var(--success);"></i> تقييمات حقيقية من مشتركين فعليين</li><li style="padding:8px 0;border-bottom:1px solid var(--border);"><i class="fas fa-check-circle" style="color:var(--success);"></i> اشترك وانت في مكانك بدون ما تروح الجيم</li><li style="padding:8px 0;"><i class="fas fa-check-circle" style="color:var(--success);"></i> مجاني 100% للمشتركين</li></ul></div><div class="form-card"><h3><i class="fas fa-users"></i> لمين التطبيق؟</h3><p><strong>للمشتركين:</strong> اللي بيدور على جيم جديد أو عايز يتابع اشتراكه.</p><p style="margin-top:8px;"><strong>للكوتشز:</strong> أصحاب الجيمات اللي عايزين يديروا مشتركينهم بسهولة.</p></div><p style="text-align:center;font-size:11px;color:var(--gray-light);margin-top:20px;">Gymawy | جيماوي - جميع الحقوق محفوظة</p></div></div>
+
+<!-- كيف يعمل -->
+<div class="page" id="howPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>كيف يعمل</h2><div></div></div><div class="container"><div class="form-card" style="text-align:center;"><h3><i class="fas fa-play-circle"></i> 3 خطوات بسيطة</h3></div><div class="form-card" style="text-align:center;"><div style="font-size:40px;color:var(--primary);">1</div><h4>سجل حساب</h4><p style="color:var(--text-secondary);font-size:13px;">أنشئ حسابك ببياناتك الحقيقية. اسمك الرباعي، بريدك الإلكتروني، ورقم هاتفك. بعد التسجيل، فعل بريدك الإلكتروني.</p></div><div class="form-card" style="text-align:center;"><div style="font-size:40px;color:var(--primary);">2</div><h4>تصفح الجيمات</h4><p style="color:var(--text-secondary);font-size:13px;">شوف الجيمات المتاحة القريبة منك. قارن الأسعار، شوف التقييمات، واختار الجيم المناسب ليك.</p></div><div class="form-card" style="text-align:center;"><div style="font-size:40px;color:var(--primary);">3</div><h4>قدم طلب اشتراك</h4><p style="color:var(--text-secondary);font-size:13px;">اختار اشتراك شهري أو سنوي. قدم الطلب. توجه للجيم وادفع. الكوتش هيفعل اشتراكك ويظهر في حسابك.</p></div></div></div>
+
+<!-- الأسئلة الشائعة -->
+<div class="page" id="faqPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>أسئلة شائعة</h2><div></div></div><div class="container"><div class="form-card"><div style="margin-bottom:16px;"><h4 style="color:var(--primary);">ازاي أشترك في جيم؟</h4><p style="color:var(--text-secondary);font-size:13px;">تصفح الجيمات، اختار الجيم اللي يناسبك، واختار نوع الاشتراك (شهري أو سنوي). بعد التقديم، توجه للجيم وادفع رسوم الاشتراك. الكوتش هيفعل اشتراكك.</p></div><div style="margin-bottom:16px;"><h4 style="color:var(--primary);">هل التطبيق مجاني؟</h4><p style="color:var(--text-secondary);font-size:13px;">نعم، التطبيق مجاني بالكامل للمشتركين. أنت فقط بتدفع رسوم اشتراك الجيم اللي بتختاره.</p></div><div style="margin-bottom:16px;"><h4 style="color:var(--primary);">إيه معنى جيم موثق؟</h4><p style="color:var(--text-secondary);font-size:13px;">الجيم الموثق يعني جيم موثوق ومضمون. بيحصل على التوثيق بعد تقييمات إيجابية من المشتركين وعدد كبير من الاشتراكات النشطة.</p></div><div style="margin-bottom:16px;"><h4 style="color:var(--primary);">ازاي أقيم جيم؟</h4><p style="color:var(--text-secondary);font-size:13px;">لازم تسجل حساب وتفعله. بعد كده تقدر تقيم أي جيم من 1 إلى 5 نجوم. تقدر تقيم مرة واحدة فقط لكل جيم.</p></div><div style="margin-bottom:16px;"><h4 style="color:var(--primary);">نسيت كلمة المرور، اعمل إيه؟</h4><p style="color:var(--text-secondary);font-size:13px;">ادخل على حسابي > هل نسيت كلمة المرور؟ > اكتب بريدك الإلكتروني > هيوصلك كود تفعيل > اكتب كلمة مرور جديدة.</p></div></div></div></div>
 </div>
 
+<!-- يتبع: الجزء الثاني -->
+  <!-- سياسة الخصوصية -->
+<div class="page" id="privacyPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>سياسة الخصوصية</h2><div></div></div><div class="container"><div class="form-card"><h3><i class="fas fa-shield-alt"></i> خصوصيتك تهمنا</h3><p>آخر تحديث: 2026</p><p style="margin-top:10px;">Gymawy | جيماوي بيحمي خصوصيتك. بنشرحلك تحت البيانات اللي بنجمعها وإزاي بنستخدمها.</p></div><div class="form-card"><h3><i class="fas fa-database"></i> البيانات اللي بنجمعها</h3><ul style="padding-right:20px;margin-top:8px;"><li>الاسم الرباعي</li><li>البريد الإلكتروني</li><li>رقم الهاتف</li></ul></div><div class="form-card"><h3><i class="fas fa-cogs"></i> إزاي بنستخدمها</h3><ul style="padding-right:20px;"><li>تفعيل حسابك</li><li>إدارة اشتراكاتك</li><li>التواصل معاك لو احتاجنا</li></ul></div><div class="form-card"><h3><i class="fas fa-lock"></i> أمان الحساب</h3><p>كلمة مرورك مشفرة ومحدش يقدر يشوفها. حسابك محمي.</p></div><div class="form-card"><h3><i class="fas fa-ban"></i> مشاركة البيانات</h3><p>ما بنشاركش بياناتك مع أي طرف تالت. لما تشترك في جيم، الكوتش بيشوف اسمك ورقمك بس عشان يتواصل معاك.</p></div><div class="form-card"><h3><i class="fas fa-trash"></i> حذف الحساب</h3><p>تقدر تطلب حذف حسابك وكل بياناتك في أي وقت.</p></div></div></div>
+
+<!-- تحميل التطبيق -->
+<div class="page" id="downloadPage"><div class="header"><button class="btn-header" onclick="goTo('home')"><i class="fas fa-arrow-right"></i> رجوع</button><h2>تحميل التطبيق</h2><div></div></div><div class="container" style="text-align:center;padding-top:30px;"><i class="fas fa-dumbbell" style="font-size:60px;color:var(--primary);margin-bottom:20px;"></i><h2>Gymawy | جيماوي</h2><p style="color:var(--text-secondary);margin-bottom:20px;">حمّل التطبيق الرسمي واستمتع بتجربة أفضل</p><div class="form-card" style="text-align:right;"><h4><i class="fas fa-check-circle" style="color:var(--success);"></i> ليه تحمل التطبيق؟</h4><ul style="list-style:none;padding:0;margin-top:10px;"><li style="margin-bottom:10px;"><i class="fas fa-mobile-alt" style="color:var(--primary);"></i> مش محتاج تفتح الموقع كل مرة - التطبيق معاك على طول</li><li style="margin-bottom:10px;"><i class="fas fa-sync-alt" style="color:var(--success);"></i> كل التحديثات بتنزل أول بأول بسهولة</li><li style="margin-bottom:10px;"><i class="fas fa-bolt" style="color:var(--warning);"></i> أسرع بكتير من فتح الموقع</li></ul></div><a href="https://www.mediafire.com/file/6t8gmjkzd1muk0a/Gymawy.apk/file" target="_blank" style="text-decoration:none;"><button class="btn btn-primary" style="font-size:16px;padding:15px;"><i class="fas fa-download"></i> تحميل التطبيق (7 MB)</button></a><p style="font-size:10px;color:var(--text-secondary);margin-top:10px;">للأندرويد فقط - الإصدار 1.0</p></div></div>
+
+<!-- صفحة الكوتش -->
+<div class="page" id="coachPage"><div class="header"><h2 id="coachTitle">Gymawy | جيماوي</h2><div class="header-actions"><button class="btn-icon-only theme-btn" onclick="toggleDark()"><i class="fas fa-moon theme-icon"></i></button><button class="btn-header" onclick="logoutCoach()"><i class="fas fa-sign-out-alt"></i> خروج</button></div></div><div class="container"><div class="tabs"><button class="tab-btn active" onclick="switchTab('gym')"><i class="fas fa-building"></i> الجيم</button><button class="tab-btn" onclick="switchTab('requests')"><i class="fas fa-bell"></i> الطلبات <span id="reqBadge" style="display:none;background:var(--danger);color:white;padding:2px 8px;border-radius:10px;font-size:10px;">0</span></button><button class="tab-btn" onclick="switchTab('members')"><i class="fas fa-users"></i> المشتركين</button><button class="tab-btn" onclick="switchTab('sessions')"><i class="fas fa-calendar"></i> الحصص</button><button class="tab-btn" onclick="switchTab('stats')"><i class="fas fa-chart-bar"></i> الإحصائيات</button></div><div class="tab-content active" id="tab-gym"><div class="form-card"><h3><i class="fas fa-edit"></i> بيانات الجيم</h3><div class="form-group"><label>اسم الجيم</label><input type="text" id="gymName" class="form-control"></div><div class="form-group"><label>صور الجيم</label><div class="images-grid" id="imagesGrid"></div><input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="uploadGymImages(this)"></div><div class="row"><div class="form-group"><label>سعر الشهر</label><input type="number" id="monthlyPrice" class="form-control"></div><div class="form-group"><label>سعر السنة</label><input type="number" id="yearlyPrice" class="form-control"></div></div><div class="row"><div class="form-group"><label>سعر الحصة</label><input type="number" id="sessionPrice" class="form-control"></div><div class="form-group"><label>عرض خاص</label><input type="number" id="offerPrice" class="form-control"></div></div><div class="row"><div class="form-group"><label>يفتح الساعة</label><input type="time" id="openTime" class="form-control"></div><div class="form-group"><label>يقفل الساعة</label><input type="time" id="closeTime" class="form-control"></div></div><div class="form-group"><label>أرقام التواصل</label><div class="phones-list" id="phonesList"></div><div class="add-phone-btn" onclick="addPhoneField()"><i class="fas fa-plus"></i> إضافة رقم</div></div><div class="form-group"><label>الموقع</label><input type="text" id="gymLoc" class="form-control"></div><div class="form-group"><label>ملاحظات</label><textarea id="gymNotes" class="form-control" rows="2"></textarea></div><button class="btn btn-primary" onclick="saveGym()"><i class="fas fa-save"></i> حفظ</button></div></div><div class="tab-content" id="tab-requests"><div id="requestsList"></div></div><div class="tab-content" id="tab-members"><button class="btn btn-success btn-sm" onclick="showAddMember()" style="margin-bottom:8px;"><i class="fas fa-plus"></i> إضافة مشترك</button><input type="text" id="memberSearchInput" class="form-control" placeholder="بحث عن مشترك..." oninput="loadMembers()" style="margin-bottom:8px;"><div id="membersList"></div></div><div class="tab-content" id="tab-sessions"><div class="form-group"><label>تاريخ</label><input type="date" id="sessionDate" class="form-control" onchange="loadSessions()"></div><div style="display:flex;gap:8px;margin-bottom:8px;"><div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessCount">0</div><div>حصص</div></div><div class="form-card" style="flex:1;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);" id="sessTotal">0 ج.م</div><div>إجمالي</div></div></div><button class="btn btn-primary btn-sm" onclick="showAddSession()" style="margin-bottom:8px;"><i class="fas fa-plus"></i> حصة</button><div id="sessionsList"></div></div><div class="tab-content" id="tab-stats"><div id="statsContent"><div class="loading-spinner"><i class="fas fa-spinner"></i></div></div></div></div></div>
+
 <!-- لوحة المطور -->
-<div class="page" id="adminPage"><div class="header"><h2>لوحة المطور</h2><div class="header-actions"><button class="btn-icon-only" onclick="toggleDark()"><i class="fas fa-moon"></i></button><button class="btn-header" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> خروج</button></div></div><div class="container" id="adminContent"></div></div>
+<div class="page" id="adminPage"><div class="header"><h2>لوحة المطور</h2><div class="header-actions"><button class="btn-icon-only theme-btn" onclick="toggleDark()"><i class="fas fa-moon theme-icon"></i></button><button class="btn-header" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> خروج</button></div></div><div class="container" id="adminContent"></div></div>
 
 <!-- المودالات -->
 <div class="modal" id="gymModal"><div class="modal-content"><div class="modal-header"><h3 id="modalTitle"></h3><button class="modal-close" onclick="closeModal('gymModal')"><i class="fas fa-times"></i></button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
 <div class="modal" id="confirmModal"><div class="modal-content"><div class="modal-header"><h3 id="confirmTitle"></h3><button class="modal-close" onclick="closeModal('confirmModal')"><i class="fas fa-times"></i></button></div><div class="modal-body" id="confirmBody"></div><div class="modal-footer"><button class="btn btn-danger" id="confirmYesBtn">نعم</button><button class="btn btn-outline" onclick="closeModal('confirmModal')">إلغاء</button></div></div></div>
 <div class="modal" id="passcodeModal"><div class="modal-content"><div class="modal-header"><h3>دخول المطور</h3><button class="modal-close" onclick="closeModal('passcodeModal')"><i class="fas fa-times"></i></button></div><div class="modal-body" style="text-align:center;"><p>كلمة المرور (6 أرقام)</p><div class="passcode-grid"><input type="text" class="form-control passcode-input" maxlength="1" id="pc1" oninput="moveNext(this,'pc2')"><input type="text" class="form-control passcode-input" maxlength="1" id="pc2" oninput="moveNext(this,'pc3')"><input type="text" class="form-control passcode-input" maxlength="1" id="pc3" oninput="moveNext(this,'pc4')"><input type="text" class="form-control passcode-input" maxlength="1" id="pc4" oninput="moveNext(this,'pc5')"><input type="text" class="form-control passcode-input" maxlength="1" id="pc5" oninput="moveNext(this,'pc6')"><input type="text" class="form-control passcode-input" maxlength="1" id="pc6"></div></div><div class="modal-footer"><button class="btn btn-primary" onclick="verifyPass()">دخول</button><button class="btn btn-outline" onclick="closeModal('passcodeModal')">إلغاء</button></div></div></div>
 
+<!-- Offline Popup -->
+<div class="offline-overlay" id="offlineOverlay"><div class="offline-popup"><i class="fas fa-wifi" style="font-size:50px;color:var(--danger);margin-bottom:15px;"></i><h3>لا يوجد اتصال بالإنترنت</h3><p>برجاء التحقق من اتصالك وحاول مرة أخرى</p><button class="btn btn-primary" onclick="retryConnection()" id="retryBtn"><i class="fas fa-redo"></i> إعادة المحاولة</button></div></div>
+
 <div class="toast" id="toast"></div>
 
-<script>
+<!-- يتبع: الجزء الثالث - JavaScript -->
+  <script>
 // ==================== CONFIG ====================
 const firebaseConfig = {
   apiKey: "AIzaSyC6WcH6mwd-I_vT9RwMNC07Dg3qp7sB66Q",
@@ -311,16 +332,30 @@ function exp(d) { return new Date(d) < new Date(); }
 function daysR(d) { return Math.ceil((new Date(d) - new Date()) / 86400000); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).substring(2, 8); }
 function showConfirm(t, m, cb) { document.getElementById('confirmTitle').textContent = t; document.getElementById('confirmBody').innerHTML = m; confirmCB = cb; document.getElementById('confirmYesBtn').onclick = function(){ closeModal('confirmModal'); if(confirmCB) confirmCB(); }; openModal('confirmModal'); }
-function toggleDark() { document.body.classList.toggle('dark'); const is = document.body.classList.contains('dark'); localStorage.setItem('darkMode', is?'1':'0'); document.querySelectorAll('.btn-icon-only i').forEach(function(i){ i.className = is?'fas fa-sun':'fas fa-moon'; }); }
+function openSidebar() { document.getElementById('sidebar').classList.add('active'); document.getElementById('sidebarOverlay').classList.add('active'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('sidebarOverlay').classList.remove('active'); }
 function moveNext(c, n) { if(c.value.length === 1) document.getElementById(n)?.focus(); }
 function generateCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
+function sendEmail(email, code) { return emailjs.send(EJ_SERVICE, EJ_TEMPLATE, { code: code, to_email: email }).catch(function(e){ return null; }); }
 
-function sendEmail(email, code) {
-  return emailjs.send(EJ_SERVICE, EJ_TEMPLATE, { code: code, to_email: email }).catch(function(e){ return null; });
+// ==================== DARK MODE (معدلة) ====================
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  const is = document.body.classList.contains('dark');
+  localStorage.setItem('darkMode', is?'1':'0');
+  const themeIcon = document.querySelector('.theme-icon');
+  if (themeIcon) { themeIcon.className = is ? 'fas fa-sun theme-icon' : 'fas fa-moon theme-icon'; }
 }
 
 // ==================== CLOUDINARY ====================
 async function uploadImg(file) { const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', CLOUD.preset); try { const r = await fetch('https://api.cloudinary.com/v1_1/'+CLOUD.cloudName+'/image/upload', { method:'POST', body:fd }); const d = await r.json(); return d.secure_url || null; } catch(e) { return null; } }
+
+// ==================== OFFLINE ====================
+function checkOnlineStatus() { if (navigator.onLine) { document.getElementById('offlineOverlay').classList.remove('active'); } else { document.getElementById('offlineOverlay').classList.add('active'); } }
+function retryConnection() { const btn = document.getElementById('retryBtn'); btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المحاولة...'; btn.disabled = true; fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' }).then(function(){ document.getElementById('offlineOverlay').classList.remove('active'); T('<i class="fas fa-check-circle"></i> تم الاتصال'); }).catch(function(){ T('<i class="fas fa-times-circle"></i> لا يوجد اتصال','error'); }).finally(function(){ btn.innerHTML = '<i class="fas fa-redo"></i> إعادة المحاولة'; btn.disabled = false; }); }
+window.addEventListener('online', checkOnlineStatus);
+window.addEventListener('offline', checkOnlineStatus);
+checkOnlineStatus();
 
 // ==================== AUTH ====================
 async function registerUser(fn, ph, un, pw, pwc, email) {
@@ -330,29 +365,18 @@ async function registerUser(fn, ph, un, pw, pwc, email) {
   if(!pw || pw.length < 6) { T('<i class="fas fa-times-circle"></i> كلمة المرور 6 حروف على الأقل', 'error'); return false; }
   if(pw !== pwc) { T('<i class="fas fa-times-circle"></i> كلمتا المرور غير متطابقتين', 'error'); return false; }
   if(!email || !email.includes('@')) { T('<i class="fas fa-times-circle"></i> بريد إلكتروني صحيح مطلوب', 'error'); return false; }
-  
   try {
     const userSnap = await db.collection('users').doc(un).get();
     if(userSnap.exists) { T('<i class="fas fa-times-circle"></i> username مستخدم بالفعل', 'error'); return false; }
-    
     const emailSnap = await db.collection('users').where('email','==',email).where('emailVerified','==',true).get();
     if(!emailSnap.empty) { T('<i class="fas fa-times-circle"></i> البريد مستخدم بالفعل في حساب مفعل', 'error'); return false; }
-    
     const passHash = CryptoJS.SHA256(pw).toString();
     const code = generateCode();
-    
-    const tempUser = {
-      fullName: fn, phone: ph, username: un, passHash: passHash,
-      email: email, emailCode: code,
-      createdAt: new Date().toISOString()
-    };
+    const tempUser = { fullName: fn, phone: ph, username: un, passHash: passHash, email: email, emailCode: code, createdAt: new Date().toISOString() };
     localStorage.setItem('pendingUser_' + un, JSON.stringify(tempUser));
-    
     sendEmail(email, code);
-    
     G.currentUser = { fullName: fn, phone: ph, username: un, email: email, emailVerified: false, pendingActivation: true };
     localStorage.setItem('userAuth', JSON.stringify(G.currentUser));
-    
     T('<i class="fas fa-check-circle"></i> تم إرسال كود التفعيل إلى بريدك - أدخل الكود للتفعيل');
     loadProfile();
     return true;
@@ -362,7 +386,6 @@ async function registerUser(fn, ph, un, pw, pwc, email) {
 async function loginUser(un, pw) {
   if(!un || un.length < 6) { T('<i class="fas fa-times-circle"></i> username غير صحيح', 'error'); return false; }
   if(!pw) { T('<i class="fas fa-times-circle"></i> كلمة المرور مطلوبة', 'error'); return false; }
-  
   try {
     const pendingUser = localStorage.getItem('pendingUser_' + un);
     if(pendingUser) {
@@ -375,7 +398,6 @@ async function loginUser(un, pw) {
         return false;
       }
     }
-    
     const snap = await db.collection('users').doc(un).get();
     if(!snap.exists) { T('<i class="fas fa-times-circle"></i> username غير موجود', 'error'); return false; }
     const data = snap.data();
@@ -387,7 +409,6 @@ async function loginUser(un, pw) {
       return false; 
     }
     if(CryptoJS.SHA256(pw).toString() !== data.passHash) { T('<i class="fas fa-times-circle"></i> كلمة مرور غير صحيحة', 'error'); return false; }
-    
     G.currentUser = { fullName: data.fullName, phone: data.phone||'', username: un, email: data.email||'', emailVerified: true };
     localStorage.setItem('userAuth', JSON.stringify(G.currentUser));
     T('<i class="fas fa-check-circle"></i> أهلاً ' + data.fullName);
@@ -400,22 +421,14 @@ async function loginUser(un, pw) {
 async function startPasswordReset() {
   const email = document.getElementById('resetInput').value.trim();
   if(!email || !email.includes('@')) { T('<i class="fas fa-times-circle"></i> أدخل بريدك الإلكتروني', 'error'); return; }
-  
   const emailSnap = await db.collection('users').where('email','==',email).where('emailVerified','==',true).get();
   if(emailSnap.empty) { T('<i class="fas fa-times-circle"></i> البريد غير مسجل أو غير مفعل', 'error'); return; }
-  
   const userData = emailSnap.docs[0].data();
   resetUser = userData.username;
   const code = generateCode();
   await db.collection('users').doc(resetUser).update({ resetCode: code });
   sendEmail(email, code);
-  
-  document.getElementById('resetArea').innerHTML = 
-    '<p style="text-align:center;color:var(--success);"><i class="fas fa-check-circle"></i> تم إرسال كود إلى: ' + email + '</p>' +
-    '<div class="form-group"><input type="text" id="resetCodeInput" class="form-control" placeholder="أدخل الكود" maxlength="6" style="text-align:center;font-size:20px;letter-spacing:8px;"></div>' +
-    '<div class="form-group"><input type="password" id="resetNewPass" class="form-control" placeholder="كلمة مرور جديدة"></div>' +
-    '<div class="form-group"><input type="password" id="resetNewPassConfirm" class="form-control" placeholder="تأكيد كلمة المرور"></div>' +
-    '<button class="btn btn-primary" onclick="completePasswordReset()">حفظ كلمة المرور الجديدة</button>';
+  document.getElementById('resetArea').innerHTML = '<p style="text-align:center;color:var(--success);"><i class="fas fa-check-circle"></i> تم إرسال كود إلى: ' + email + '</p><div class="form-group"><input type="text" id="resetCodeInput" class="form-control" placeholder="أدخل الكود" maxlength="6" style="text-align:center;font-size:20px;letter-spacing:8px;"></div><div class="form-group"><input type="password" id="resetNewPass" class="form-control" placeholder="كلمة مرور جديدة"></div><div class="form-group"><input type="password" id="resetNewPassConfirm" class="form-control" placeholder="تأكيد كلمة المرور"></div><button class="btn btn-primary" onclick="completePasswordReset()">حفظ كلمة المرور الجديدة</button>';
 }
 
 async function completePasswordReset() {
@@ -433,151 +446,37 @@ async function completePasswordReset() {
   loadProfile();
 }
 
-function logoutUser() { 
-  localStorage.removeItem('userAuth'); 
-  G.currentUser = null; 
-  goTo('home'); 
-  goTo('profile');
-  T('تم تسجيل الخروج'); 
-}
+function logoutUser() { localStorage.removeItem('userAuth'); G.currentUser = null; goTo('home'); goTo('profile'); T('تم تسجيل الخروج'); }
 
 // ==================== PROFILE ====================
 async function loadProfile() {
   const c = document.getElementById('profileContent');
   if(!G.currentUser) {
-    c.innerHTML = `<div class="form-card" style="text-align:center;">
-      <i class="fas fa-user-circle" style="font-size:50px;color:var(--primary);margin-bottom:12px;"></i>
-      <h3>تسجيل الدخول</h3>
-      <div class="form-group"><label><i class="fas fa-user"></i> Username</label><input type="text" id="profLoginUser" class="form-control" placeholder="6-16 حرف" style="text-transform:uppercase;"></div>
-      <div class="form-group"><label><i class="fas fa-lock"></i> كلمة المرور</label><input type="password" id="profLoginPass" class="form-control" placeholder="********"></div>
-      <button class="btn btn-primary" onclick="profileLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button>
-      <div class="auth-links">
-        <span onclick="showProfileRegister()"><i class="fas fa-user-plus"></i> إنشاء حساب</span>
-        <span onclick="showPasswordReset()"><i class="fas fa-key"></i> هل نسيت كلمة المرور؟</span>
-      </div>
-      <div id="profRegisterArea" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
-        <h4>إنشاء حساب جديد</h4>
-        <div class="form-group"><label><i class="fas fa-id-card"></i> الاسم الرباعي</label><input type="text" id="profRegName" class="form-control" placeholder="6 حروف على الأقل"></div>
-        <div class="form-group"><label><i class="fas fa-phone"></i> رقم الهاتف</label><input type="tel" id="profRegPhone" class="form-control" placeholder="01xxxxxxxxx"></div>
-        <div class="form-group"><label><i class="fas fa-envelope"></i> البريد الإلكتروني</label><input type="email" id="profRegEmail" class="form-control" placeholder="example@mail.com"></div>
-        <div class="form-group"><label><i class="fas fa-user"></i> Username</label><input type="text" id="profRegUser" class="form-control" placeholder="6-16 حرف" style="text-transform:uppercase;"></div>
-        <div class="form-group"><label><i class="fas fa-lock"></i> كلمة المرور</label><input type="password" id="profRegPass" class="form-control" placeholder="6 حروف على الأقل"></div>
-        <div class="form-group"><label><i class="fas fa-lock"></i> تأكيد كلمة المرور</label><input type="password" id="profRegPassConfirm" class="form-control" placeholder="أعد كتابة كلمة المرور"></div>
-        <button class="btn btn-success" onclick="profileRegister()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
-        <p style="text-align:center;margin-top:8px;"><span style="color:var(--primary);cursor:pointer;" onclick="hideProfileRegister()">رجوع</span></p>
-      </div>
-      <div id="resetArea" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;"></div>
-    </div>`;
+    c.innerHTML = `<div class="form-card" style="text-align:center;"><i class="fas fa-user-circle" style="font-size:50px;color:var(--primary);margin-bottom:12px;"></i><h3>تسجيل الدخول</h3><div class="form-group"><label><i class="fas fa-user"></i> Username</label><input type="text" id="profLoginUser" class="form-control" placeholder="6-16 حرف" style="text-transform:uppercase;"></div><div class="form-group"><label><i class="fas fa-lock"></i> كلمة المرور</label><input type="password" id="profLoginPass" class="form-control" placeholder="********"></div><button class="btn btn-primary" onclick="profileLogin()"><i class="fas fa-sign-in-alt"></i> دخول</button><div class="auth-links"><span onclick="showProfileRegister()"><i class="fas fa-user-plus"></i> إنشاء حساب</span><span onclick="showPasswordReset()"><i class="fas fa-key"></i> هل نسيت كلمة المرور؟</span></div><div id="profRegisterArea" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;"><h4>إنشاء حساب جديد</h4><div class="form-group"><label><i class="fas fa-id-card"></i> الاسم الرباعي</label><input type="text" id="profRegName" class="form-control" placeholder="6 حروف على الأقل"></div><div class="form-group"><label><i class="fas fa-phone"></i> رقم الهاتف</label><input type="tel" id="profRegPhone" class="form-control" placeholder="01xxxxxxxxx"></div><div class="form-group"><label><i class="fas fa-envelope"></i> البريد الإلكتروني</label><input type="email" id="profRegEmail" class="form-control" placeholder="example@mail.com"></div><div class="form-group"><label><i class="fas fa-user"></i> Username</label><input type="text" id="profRegUser" class="form-control" placeholder="6-16 حرف" style="text-transform:uppercase;"></div><div class="form-group"><label><i class="fas fa-lock"></i> كلمة المرور</label><input type="password" id="profRegPass" class="form-control" placeholder="6 حروف على الأقل"></div><div class="form-group"><label><i class="fas fa-lock"></i> تأكيد كلمة المرور</label><input type="password" id="profRegPassConfirm" class="form-control" placeholder="أعد كتابة كلمة المرور"></div><button class="btn btn-success" onclick="profileRegister()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button><p style="text-align:center;margin-top:8px;"><span style="color:var(--primary);cursor:pointer;" onclick="hideProfileRegister()">رجوع</span></p></div><div id="resetArea" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;"></div></div>`;
     return;
   }
-  
   if(!G.currentUser.emailVerified) {
-    c.innerHTML = `<div class="form-card" style="text-align:center;">
-      <i class="fas fa-user-circle" style="font-size:50px;color:var(--primary);margin-bottom:12px;"></i>
-      <h3>${G.currentUser.fullName}</h3>
-      <p><i class="fas fa-user"></i> ${G.currentUser.username}</p>
-      <p><i class="fas fa-phone"></i> ${G.currentUser.phone||'غير مسجل'}</p>
-      <p><i class="fas fa-envelope"></i> ${G.currentUser.email||'غير مسجل'}</p>
-      <p style="color:var(--danger);"><i class="fas fa-exclamation-circle"></i> الحساب غير مفعل</p>
-      <span class="verify-hint" onclick="showVerification()">(اضغط هنا لوضع كود التفعيل)</span>
-      <div style="margin-top:12px;">
-        <button class="btn btn-outline btn-sm" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> خروج</button>
-      </div>
-      <p style="font-size:10px;color:var(--text-secondary);margin-top:10px;">ملاحظة: إذا خرجت بدون تفعيل، ستحتاج لإعادة التسجيل</p>
-    </div>`;
+    c.innerHTML = `<div class="form-card" style="text-align:center;"><i class="fas fa-user-circle" style="font-size:50px;color:var(--primary);margin-bottom:12px;"></i><h3>${G.currentUser.fullName}</h3><p><i class="fas fa-user"></i> ${G.currentUser.username}</p><p><i class="fas fa-phone"></i> ${G.currentUser.phone||'غير مسجل'}</p><p><i class="fas fa-envelope"></i> ${G.currentUser.email||'غير مسجل'}</p><p style="color:var(--danger);"><i class="fas fa-exclamation-circle"></i> الحساب غير مفعل</p><span class="verify-hint" onclick="showVerification()">(اضغط هنا لوضع كود التفعيل)</span><div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> خروج</button></div><p style="font-size:10px;color:var(--text-secondary);margin-top:10px;">ملاحظة: إذا خرجت بدون تفعيل، ستحتاج لإعادة التسجيل</p></div>`;
     return;
   }
-  
   const mSnap = await db.collection('members').where('phone','==',G.currentUser.phone||'').get();
   const members = []; mSnap.forEach(function(doc){ members.push({ id:doc.id, ...doc.data() }); });
   const active = members.filter(function(m){ return m.active && !m.leftByUser; });
   const hist = members.filter(function(m){ return !m.active || m.leftByUser; });
-  
-  c.innerHTML = `<div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;box-shadow:var(--shadow);">
-    <i class="fas fa-user-circle" style="font-size:46px;color:var(--primary);"></i>
-    <h2>${G.currentUser.fullName}</h2>
-    <p><i class="fas fa-user"></i> ${G.currentUser.username}</p>
-    <p><i class="fas fa-phone"></i> ${G.currentUser.phone||'غير مسجل'}</p>
-    <p><i class="fas fa-envelope"></i> ${G.currentUser.email||'غير مسجل'} <span style="color:var(--success);"><i class="fas fa-check-circle"></i> مفعل</span></p>
-    <button class="btn btn-outline btn-sm" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> خروج</button>
-  </div>
-  <h3><i class="fas fa-list"></i> اشتراكاتي النشطة</h3>
-  ${active.length ? active.map(function(m){ const ok=m.paid&&!exp(m.due); const rd=daysR(m.due); const soon=ok&&rd<=3&&rd>0; return `<div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:16px;padding:14px;color:white;margin-bottom:8px;position:relative;">
-    <button style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:10px;font-size:10px;cursor:pointer;" onclick="leaveGym('${m.id}')"><i class="fas fa-sign-out-alt"></i> خروج</button>
-    <div style="font-size:16px;font-weight:800;">${m.gymName}</div>
-    <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px;margin:6px 0;"><div style="display:flex;justify-content:space-between;font-size:12px;"><span>بدء</span><span>${fmt(m.start)}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;"><span>استحقاق</span><span>${fmt(m.due)}</span></div></div>
-    ${soon?`<div style="background:rgba(255,193,7,0.3);padding:6px;border-radius:8px;font-size:11px;margin-bottom:4px;"><i class="fas fa-exclamation-triangle"></i> باقي ${rd} ${rd===1?'يوم':'أيام'} على انتهاء الاشتراك</div>`:''}
-    <span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;background:${ok?'rgba(0,184,148,0.3)':'rgba(255,107,107,0.3)'};"><i class="fas ${ok?'fa-check-circle':'fa-clock'}"></i> ${ok?'مدفوع':'متأخر'}</span>
-  </div>`; }).join('') : '<p>لا اشتراكات نشطة</p>'}
-  ${hist.length ? `<h3><i class="fas fa-history"></i> السجل</h3>${hist.map(function(m){ return `<div style="background:var(--card);border-radius:8px;padding:8px;margin-bottom:4px;font-size:12px;color:var(--text-secondary);"><strong>${m.gymName}</strong> - ${m.leftByUser?'خرج':'انتهى'} ${fmt(m.due)}</div>`; }).join('')}` : ''}`;
+  c.innerHTML = `<div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;box-shadow:var(--shadow);"><i class="fas fa-user-circle" style="font-size:46px;color:var(--primary);"></i><h2>${G.currentUser.fullName}</h2><p><i class="fas fa-user"></i> ${G.currentUser.username}</p><p><i class="fas fa-phone"></i> ${G.currentUser.phone||'غير مسجل'}</p><p><i class="fas fa-envelope"></i> ${G.currentUser.email||'غير مسجل'} <span style="color:var(--success);"><i class="fas fa-check-circle"></i> مفعل</span></p><button class="btn btn-outline btn-sm" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> خروج</button></div><h3><i class="fas fa-list"></i> اشتراكاتي النشطة</h3>${active.length ? active.map(function(m){ const ok=m.paid&&!exp(m.due); const rd=daysR(m.due); const soon=ok&&rd<=3&&rd>0; return `<div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:16px;padding:14px;color:white;margin-bottom:8px;position:relative;"><button style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:10px;font-size:10px;cursor:pointer;" onclick="leaveGym('${m.id}')"><i class="fas fa-sign-out-alt"></i> خروج</button><div style="font-size:16px;font-weight:800;">${m.gymName}</div><div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:8px;margin:6px 0;"><div style="display:flex;justify-content:space-between;font-size:12px;"><span>بدء</span><span>${fmt(m.start)}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;"><span>استحقاق</span><span>${fmt(m.due)}</span></div></div>${soon?`<div style="background:rgba(255,193,7,0.3);padding:6px;border-radius:8px;font-size:11px;margin-bottom:4px;"><i class="fas fa-exclamation-triangle"></i> باقي ${rd} ${rd===1?'يوم':'أيام'} على انتهاء الاشتراك</div>`:''}<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;background:${ok?'rgba(0,184,148,0.3)':'rgba(255,107,107,0.3)'};"><i class="fas ${ok?'fa-check-circle':'fa-clock'}"></i> ${ok?'مدفوع':'متأخر'}</span></div>`; }).join('') : '<p>لا اشتراكات نشطة</p>'}${hist.length ? `<h3><i class="fas fa-history"></i> السجل</h3>${hist.map(function(m){ return `<div style="background:var(--card);border-radius:8px;padding:8px;margin-bottom:4px;font-size:12px;color:var(--text-secondary);"><strong>${m.gymName}</strong> - ${m.leftByUser?'خرج':'انتهى'} ${fmt(m.due)}</div>`; }).join('')}` : ''}`;
 }
 
-function showPasswordReset() {
-  document.getElementById('resetArea').style.display = 'block';
-  document.getElementById('resetArea').innerHTML = 
-    '<h4>استعادة كلمة المرور</h4>' +
-    '<div class="form-group"><label><i class="fas fa-envelope"></i> البريد الإلكتروني</label><input type="email" id="resetInput" class="form-control" placeholder="example@mail.com"></div>' +
-    '<button class="btn btn-warning" onclick="startPasswordReset()"><i class="fas fa-paper-plane"></i> إرسال الكود</button>' +
-    '<p style="text-align:center;margin-top:8px;"><span style="color:var(--primary);cursor:pointer;" onclick="document.getElementById(\'resetArea\').style.display=\'none\'">رجوع</span></p>';
-}
-
-function showVerification() {
-  document.getElementById('modalTitle').textContent = 'تفعيل البريد';
-  document.getElementById('modalBody').innerHTML = '<p style="text-align:center;">أدخل كود التفعيل المرسل إلى بريدك</p><div class="form-group"><input type="text" id="verifyCodeInput" class="form-control" placeholder="6 أرقام" maxlength="6" style="text-align:center;font-size:22px;letter-spacing:8px;"></div>';
-  document.getElementById('modalFooter').innerHTML = '<button class="btn btn-primary" onclick="verifyCode()"><i class="fas fa-check"></i> تفعيل</button>';
-  openModal('gymModal');
-}
-
+function showPasswordReset() { document.getElementById('resetArea').style.display = 'block'; document.getElementById('resetArea').innerHTML = '<h4>استعادة كلمة المرور</h4><div class="form-group"><label><i class="fas fa-envelope"></i> البريد الإلكتروني</label><input type="email" id="resetInput" class="form-control" placeholder="example@mail.com"></div><button class="btn btn-warning" onclick="startPasswordReset()"><i class="fas fa-paper-plane"></i> إرسال الكود</button><p style="text-align:center;margin-top:8px;"><span style="color:var(--primary);cursor:pointer;" onclick="document.getElementById(\'resetArea\').style.display=\'none\'">رجوع</span></p>'; }
+function showVerification() { document.getElementById('modalTitle').textContent = 'تفعيل البريد'; document.getElementById('modalBody').innerHTML = '<p style="text-align:center;">أدخل كود التفعيل المرسل إلى بريدك</p><div class="form-group"><input type="text" id="verifyCodeInput" class="form-control" placeholder="6 أرقام" maxlength="6" style="text-align:center;font-size:22px;letter-spacing:8px;"></div>'; document.getElementById('modalFooter').innerHTML = '<button class="btn btn-primary" onclick="verifyCode()"><i class="fas fa-check"></i> تفعيل</button>'; openModal('gymModal'); }
 async function verifyCode() {
   const code = document.getElementById('verifyCodeInput').value.trim();
   if(!code || code.length !== 6) { T('أدخل كود صحيح مكون من 6 أرقام', 'error'); return; }
-  
   const un = G.currentUser.username;
-  
   const pendingUser = localStorage.getItem('pendingUser_' + un);
-  if(pendingUser) {
-    const pu = JSON.parse(pendingUser);
-    if(pu.emailCode !== code) { T('<i class="fas fa-times-circle"></i> كود غير صحيح', 'error'); return; }
-    
-    await db.collection('users').doc(un).set({
-      fullName: pu.fullName, phone: pu.phone, username: un, passHash: pu.passHash,
-      email: pu.email, emailVerified: true, emailCode: null,
-      createdAt: pu.createdAt
-    });
-    
-    localStorage.removeItem('pendingUser_' + un);
-    
-    G.currentUser.emailVerified = true;
-    G.currentUser.pendingActivation = false;
-    localStorage.setItem('userAuth', JSON.stringify(G.currentUser));
-    
-    closeModal('gymModal');
-    loadProfile();
-    T('<i class="fas fa-check-circle"></i> تم تفعيل الحساب بنجاح');
-    return;
-  }
-  
-  const snap = await db.collection('users').doc(un).get();
-  if(!snap.exists) { T('خطأ في الحساب', 'error'); return; }
-  const data = snap.data();
-  if(data.emailCode !== code) { T('<i class="fas fa-times-circle"></i> كود غير صحيح', 'error'); return; }
-  
-  await db.collection('users').doc(un).update({ emailVerified: true, emailCode: null });
-  G.currentUser.emailVerified = true;
-  localStorage.setItem('userAuth', JSON.stringify(G.currentUser));
-  
-  closeModal('gymModal');
-  loadProfile();
-  T('<i class="fas fa-check-circle"></i> تم تفعيل الحساب بنجاح');
-}
+  if(pendingUser) { const pu = JSON.parse(pendingUser); if(pu.emailCode !== code) { T('<i class="fas fa-times-circle"></i> كود غير صحيح', 'error'); return; } await db.collection('users').doc(un).set({ fullName: pu.fullName, phone: pu.phone, username: un, passHash: pu.passHash, email: pu.email, emailVerified: true, emailCode: null, createdAt: pu.createdAt }); localStorage.removeItem('pendingUser_' + un); G.currentUser.emailVerified = true; G.currentUser.pendingActivation = false; localStorage.setItem('userAuth', JSON.stringify(G.currentUser)); closeModal('gymModal'); loadProfile(); T('<i class="fas fa-check-circle"></i> تم تفعيل الحساب بنجاح'); return; }
+  const snap = await db.collection('users').doc(un).get(); if(!snap.exists) { T('خطأ في الحساب', 'error'); return; } const data = snap.data(); if(data.emailCode !== code) { T('<i class="fas fa-times-circle"></i> كود غير صحيح', 'error'); return; } await db.collection('users').doc(un).update({ emailVerified: true, emailCode: null }); G.currentUser.emailVerified = true; localStorage.setItem('userAuth', JSON.stringify(G.currentUser)); closeModal('gymModal'); loadProfile(); T('<i class="fas fa-check-circle"></i> تم تفعيل الحساب بنجاح'); }
 
-async function leaveGym(mid) {
-  showConfirm('تأكيد الخروج', '<p>متأكد من الخروج؟</p>', async function(){
-    await db.collection('members').doc(mid).update({ leftByUser: true, active: false, paid: false, leaveDate: new Date().toISOString() });
-    T('تم الخروج', 'warning'); loadProfile();
-  });
-}
-
+async function leaveGym(mid) { showConfirm('تأكيد الخروج', '<p>متأكد من الخروج؟</p>', async function(){ await db.collection('members').doc(mid).update({ leftByUser: true, active: false, paid: false, leaveDate: new Date().toISOString() }); T('تم الخروج', 'warning'); loadProfile(); }); }
 async function profileLogin() { const u=document.getElementById('profLoginUser').value.trim().toUpperCase(); const p=document.getElementById('profLoginPass').value; await loginUser(u,p); }
 async function profileRegister(){ const fn=document.getElementById('profRegName').value.trim(); const ph=document.getElementById('profRegPhone').value.trim(); const email=document.getElementById('profRegEmail').value.trim(); const un=document.getElementById('profRegUser').value.trim().toUpperCase(); const pw=document.getElementById('profRegPass').value; const pwc=document.getElementById('profRegPassConfirm').value; await registerUser(fn,ph,un,pw,pwc,email); }
 function showProfileRegister(){ document.getElementById('profRegisterArea').style.display='block'; }
@@ -586,7 +485,7 @@ function hideProfileRegister(){ document.getElementById('profRegisterArea').styl
 // ==================== MY REQS ====================
 async function loadMyReqs(){ const c=document.getElementById('myReqContent'); if(!G.currentUser||!G.currentUser.emailVerified){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>سجل دخولك أولاً</h4></div>';return;} const snap=await db.collection('requests').where('phone','==',G.currentUser.phone||'').get(); const reqs=[]; snap.forEach(function(doc){reqs.push({id:doc.id,...doc.data()});}); if(!reqs.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>لا طلبات</h4></div>';return;} c.innerHTML=reqs.reverse().map(function(r){const s=r.status==='pending'?'<i class="fas fa-clock"></i> معلق':r.status==='accepted'?'<i class="fas fa-check-circle"></i> مقبول':'<i class="fas fa-times-circle"></i> مرفوض';return `<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;"><div><strong>${r.gymName}</strong><div style="font-size:11px;">${fmt(r.created)} | ${r.subType==='monthly'?'شهري':'سنوي'}</div></div><span>${s}</span></div>`;}).join('');}
 
-// ==================== GYMS & RATINGS ====================
+// ==================== GYMS ====================
 async function loadGyms(){
   const c=document.getElementById('gymsList');
   c.innerHTML='<div class="loading-spinner"><i class="fas fa-spinner"></i></div>';
@@ -599,29 +498,11 @@ async function loadGyms(){
     const s=(document.getElementById('searchInput')?.value||'').toLowerCase();
     let f=G.allGyms.filter(function(g){return g.active&&g.subEnd&&!exp(g.subEnd)&&!hidden.includes(g.id);});
     if(s)f=f.filter(function(g){return g.name.toLowerCase().includes(s)||(g.location||'').toLowerCase().includes(s);});
-    
     const ratingSnap=await db.collection('ratings').get();
     const ratings={}; ratingSnap.forEach(function(doc){const d=doc.data();if(!ratings[d.gymId])ratings[d.gymId]=[];ratings[d.gymId].push(d.rating);});
-    
-    f.sort(function(a,b){
-      if(a.verified&&!b.verified)return -1;
-      if(!a.verified&&b.verified)return 1;
-      const modeA=ratings[a.id]?.length>=10?getModeRating(ratings[a.id]):0;
-      const modeB=ratings[b.id]?.length>=10?getModeRating(ratings[b.id]):0;
-      return modeB-modeA;
-    });
-    
+    f.sort(function(a,b){if(a.verified&&!b.verified)return -1;if(!a.verified&&b.verified)return 1;const modeA=ratings[a.id]?.length>=10?getModeRating(ratings[a.id]):0;const modeB=ratings[b.id]?.length>=10?getModeRating(ratings[b.id]):0;return modeB-modeA;});
     if(!f.length){c.innerHTML='<div class="empty"><i class="fas fa-store-slash"></i><h4>لا جيمات متاحة</h4></div>';return;}
-    
-    c.innerHTML=f.map(function(g){
-      const gymRatings=ratings[g.id]||[];
-      const modeRating=gymRatings.length>=10?getModeRating(gymRatings):0;
-      const starsHTML=getStarsHTML(modeRating);
-      return `<div class="gym-card" onclick="showGym('${g.id}')">
-        <div class="gym-card-image">${g.images?.length?`<img src="${g.images[0]}">`:'<i class="fas fa-dumbbell ph"></i>'}${g.verified?'<span class="verified-badge"><i class="fas fa-check-circle"></i> موثق</span>':''}${g.offerPrice?`<span class="gym-card-badge">عرض ${g.offerPrice} ج.م</span>`:''}</div>
-        <div class="gym-card-body"><div class="gym-card-title">${g.name}</div><div class="gym-prices"><div class="gym-price-item"><span class="gym-price-value">${g.monthlyPrice}</span><span class="gym-price-label">ج.م/شهر</span></div>${g.yearlyPrice?`<div class="gym-price-item"><span class="gym-price-value">${g.yearlyPrice}</span><span class="gym-price-label">ج.م/سنة</span></div>`:''}</div>${modeRating>0?`<div class="stars" style="margin:4px 0;">${starsHTML}</div>`:''}</div>
-      </div>`;
-    }).join('');
+    c.innerHTML=f.map(function(g){const gymRatings=ratings[g.id]||[];const modeRating=gymRatings.length>=10?getModeRating(gymRatings):0;const starsHTML=getStarsHTML(modeRating);return `<div class="gym-card" onclick="showGym('${g.id}')"><div class="gym-card-image">${g.images?.length?`<img src="${g.images[0]}">`:'<i class="fas fa-dumbbell ph"></i>'}${g.verified?'<span class="verified-badge"><i class="fas fa-check-circle"></i> موثق</span>':''}${g.offerPrice?`<span class="gym-card-badge">عرض ${g.offerPrice} ج.م</span>`:''}</div><div class="gym-card-body"><div class="gym-card-title">${g.name}</div><div class="gym-prices"><div class="gym-price-item"><span class="gym-price-value">${g.monthlyPrice}</span><span class="gym-price-label">ج.م/شهر</span></div>${g.yearlyPrice?`<div class="gym-price-item"><span class="gym-price-value">${g.yearlyPrice}</span><span class="gym-price-label">ج.م/سنة</span></div>`:''}</div>${modeRating>0?`<div class="stars" style="margin:4px 0;">${starsHTML}</div>`:''}</div></div>`;}).join('');
   }catch(e){c.innerHTML='<div class="empty"><i class="fas fa-wifi"></i><h4>تأكد من الاتصال</h4></div>';}
 }
 
@@ -630,23 +511,11 @@ function getStarsHTML(r){let h='';for(let i=1;i<=5;i++){h+=i<=r?'<i class="fas f
 
 function showGym(id){
   const g=G.allGyms.find(function(x){return x.id===id;});if(!g)return;G.selGym=g;
-  const openT=g.openTime||'--';const closeT=g.closeTime||'--';
-  const is24=!g.openTime&&!g.closeTime;
+  const openT=g.openTime||'--';const closeT=g.closeTime||'--';const is24=!g.openTime&&!g.closeTime;
   let imgsHTML='';
   if(g.images?.length){imgsHTML='<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;">'+g.images.map(function(i){return `<img src="${i}" style="width:100%;max-width:250px;height:180px;object-fit:cover;border-radius:10px;flex-shrink:0;">`;}).join('')+'</div>';}
   document.getElementById('modalTitle').textContent=g.name;
-  document.getElementById('modalBody').innerHTML=imgsHTML+
-    (g.verified?'<div style="background:#FFF8E1;padding:6px 10px;border-radius:8px;margin-bottom:10px;font-size:12px;color:#F57F17;"><i class="fas fa-check-circle"></i> هذا الجيم موثق</div>':'')+
-    '<h4><i class="fas fa-tag"></i> الأسعار</h4>'+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>شهري</span><strong>'+g.monthlyPrice+' ج.م</strong></div>'+
-    (g.yearlyPrice?'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>سنوي</span><strong>'+g.yearlyPrice+' ج.م</strong></div>':'')+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>الحصة</span><strong>'+g.sessionPrice+' ج.م</strong></div>'+
-    '<h4 style="margin-top:10px;"><i class="fas fa-clock"></i> مواعيد العمل</h4>'+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>يفتح</span><strong>'+(is24?'24 ساعة':openT)+'</strong></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>يقفل</span><strong>'+(is24?'24 ساعة':closeT)+'</strong></div>'+
-    '<div style="margin-top:10px;padding:8px;background:var(--light);border-radius:8px;"><strong><i class="fas fa-phone"></i> التواصل:</strong> '+(g.phones?.length?g.phones.map(function(p){return '<a href="tel:'+p+'" style="display:inline-block;margin:2px;padding:4px 8px;background:var(--card);border-radius:15px;color:var(--primary);text-decoration:none;font-weight:600;font-size:12px;">'+p+'</a>';}).join(''):'لا يوجد')+'</div>'+
-    '<div style="margin-top:6px;"><strong><i class="fas fa-map-marker-alt"></i> الموقع:</strong> '+(g.location||'غير محدد')+'</div>'+
-    '<div style="margin-top:10px;text-align:center;"><strong>تقييم الجيم</strong><div class="stars">'+getRatingInputHTML()+'</div>'+(G.currentUser?.emailVerified?'<button class="btn btn-sm btn-primary" onclick="submitRating()">تقييم</button>':'<p style="font-size:10px;color:var(--danger);">فعل بريدك للتقييم</p>')+'</div>';
+  document.getElementById('modalBody').innerHTML=imgsHTML+(g.verified?'<div style="background:#FFF8E1;padding:6px 10px;border-radius:8px;margin-bottom:10px;font-size:12px;color:#F57F17;"><i class="fas fa-check-circle"></i> هذا الجيم موثق</div>':'')+'<h4><i class="fas fa-tag"></i> الأسعار</h4><div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>شهري</span><strong>'+g.monthlyPrice+' ج.م</strong></div>'+(g.yearlyPrice?'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>سنوي</span><strong>'+g.yearlyPrice+' ج.م</strong></div>':'')+'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>الحصة</span><strong>'+g.sessionPrice+' ج.م</strong></div><h4 style="margin-top:10px;"><i class="fas fa-clock"></i> مواعيد العمل</h4><div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>يفتح</span><strong>'+(is24?'24 ساعة':openT)+'</strong></div><div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span>يقفل</span><strong>'+(is24?'24 ساعة':closeT)+'</strong></div><div style="margin-top:10px;padding:8px;background:var(--light);border-radius:8px;"><strong><i class="fas fa-phone"></i> التواصل:</strong> '+(g.phones?.length?g.phones.map(function(p){return '<a href="tel:'+p+'" style="display:inline-block;margin:2px;padding:4px 8px;background:var(--card);border-radius:15px;color:var(--primary);text-decoration:none;font-weight:600;font-size:12px;">'+p+'</a>';}).join(''):'لا يوجد')+'</div><div style="margin-top:6px;"><strong><i class="fas fa-map-marker-alt"></i> الموقع:</strong> '+(g.location||'غير محدد')+'</div><div style="margin-top:10px;text-align:center;"><strong>تقييم الجيم</strong><div class="stars">'+getRatingInputHTML()+'</div>'+(G.currentUser?.emailVerified?'<button class="btn btn-sm btn-primary" onclick="submitRating()">تقييم</button>':'<p style="font-size:10px;color:var(--danger);">فعل بريدك للتقييم</p>')+'</div>';
   document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="subGym()"><i class="fas fa-hand-paper"></i> طلب اشتراك</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إغلاق</button>';
   G._rating=0;openModal('gymModal');
 }
@@ -655,28 +524,9 @@ function getRatingInputHTML(){let h='';for(let i=1;i<=5;i++){h+='<i class="fas f
 function setRating(r){G._rating=r;for(let i=1;i<=5;i++){const star=document.getElementById('star'+i);if(star){if(i<=r){star.classList.remove('empty');star.style.color='#FFD700';}else{star.classList.add('empty');star.style.color='#DDD';}}}}
 async function submitRating(){if(!G._rating){T('اختر تقييم','error');return;}if(!G.currentUser?.emailVerified){T('فعل بريدك أولاً','error');return;}const existSnap=await db.collection('ratings').where('gymId','==',G.selGym.id).where('userId','==',G.currentUser.username).get();if(!existSnap.empty){T('قيمت مسبقاً','warning');return;}await db.collection('ratings').add({gymId:G.selGym.id,userId:G.currentUser.username,rating:G._rating,createdAt:new Date().toISOString()});T('<i class="fas fa-check-circle"></i> شكراً لتقييمك');closeModal('gymModal');loadGyms();}
 
-async function subGym(){
-  if(!G.currentUser||!G.currentUser.emailVerified){closeModal('gymModal');goTo('profile');setTimeout(function(){T('سجل دخولك أولاً وفعل بريدك','warning');},300);return;}
-  const ph=G.currentUser.phone||'';
-  if(!ph){T('يجب تسجيل رقم الهاتف','error');return;}
-  const pend=await db.collection('requests').where('gymId','==',G.selGym.id).where('phone','==',ph).where('status','==','pending').get();
-  if(!pend.empty){T('لديك طلب معلق','warning');return;}
-  const dupMem=await db.collection('members').where('gymId','==',G.selGym.id).where('phone','==',ph).where('active','==',true).where('leftByUser','==',false).get();
-  if(!dupMem.empty){T('أنت مشترك بالفعل في هذا الجيم','warning');return;}
-  G.subType='monthly';
-  document.getElementById('modalTitle').textContent='اختر نوع الاشتراك';
-  document.getElementById('modalBody').innerHTML='<div class="radio-group"><div class="radio-option selected" id="optMonthly" onclick="selSub(\'monthly\')"><i class="fas fa-calendar"></i> شهري<span style="display:block;font-size:11px;">'+G.selGym.monthlyPrice+' ج.م</span></div>'+(G.selGym.yearlyPrice?'<div class="radio-option" id="optYearly" onclick="selSub(\'yearly\')"><i class="fas fa-calendar-alt"></i> سنوي<span style="display:block;font-size:11px;">'+G.selGym.yearlyPrice+' ج.م</span></div>':'')+'</div><div style="margin-top:10px;padding:8px;background:#EFF6FF;border-radius:8px;font-size:11px;color:#1E40AF;"><i class="fas fa-info-circle"></i> توجه للجيم للدفع بعد التقديم</div>';
-  document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="confirmSub()"><i class="fas fa-check"></i> تأكيد</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>';
-  openModal('gymModal');
-}
+async function subGym(){if(!G.currentUser||!G.currentUser.emailVerified){closeModal('gymModal');goTo('profile');setTimeout(function(){T('سجل دخولك أولاً وفعل بريدك','warning');},300);return;}const ph=G.currentUser.phone||'';if(!ph){T('يجب تسجيل رقم الهاتف','error');return;}const pend=await db.collection('requests').where('gymId','==',G.selGym.id).where('phone','==',ph).where('status','==','pending').get();if(!pend.empty){T('لديك طلب معلق','warning');return;}const dupMem=await db.collection('members').where('gymId','==',G.selGym.id).where('phone','==',ph).where('active','==',true).where('leftByUser','==',false).get();if(!dupMem.empty){T('أنت مشترك بالفعل في هذا الجيم','warning');return;}G.subType='monthly';document.getElementById('modalTitle').textContent='اختر نوع الاشتراك';document.getElementById('modalBody').innerHTML='<div class="radio-group"><div class="radio-option selected" id="optMonthly" onclick="selSub(\'monthly\')"><i class="fas fa-calendar"></i> شهري<span style="display:block;font-size:11px;">'+G.selGym.monthlyPrice+' ج.م</span></div>'+(G.selGym.yearlyPrice?'<div class="radio-option" id="optYearly" onclick="selSub(\'yearly\')"><i class="fas fa-calendar-alt"></i> سنوي<span style="display:block;font-size:11px;">'+G.selGym.yearlyPrice+' ج.م</span></div>':'')+'</div><div style="margin-top:10px;padding:8px;background:#EFF6FF;border-radius:8px;font-size:11px;color:#1E40AF;"><i class="fas fa-info-circle"></i> توجه للجيم للدفع بعد التقديم</div>';document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="confirmSub()"><i class="fas fa-check"></i> تأكيد</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>';openModal('gymModal');}
 function selSub(t){G.subType=t;document.querySelectorAll('.radio-option').forEach(function(o){o.classList.remove('selected');});document.getElementById(t==='monthly'?'optMonthly':'optYearly')?.classList.add('selected');}
-async function confirmSub(){
-  const ph=G.currentUser?.phone||'',nm=G.currentUser?.fullName||'';
-  await db.collection('requests').add({gymId:G.selGym.id,gymName:G.selGym.name,name:nm,phone:ph,subType:G.subType,status:'pending',created:new Date().toISOString()});
-  await rtdb.ref('newRequests/'+G.selGym.id).set({time:Date.now()});
-  if(G.subType==='yearly'){await db.collection('gyms').doc(G.selGym.id).update({verified:true});}
-  closeModal('gymModal');T('<i class="fas fa-check-circle"></i> تم إرسال الطلب');
-}
+async function confirmSub(){const ph=G.currentUser?.phone||'',nm=G.currentUser?.fullName||'';await db.collection('requests').add({gymId:G.selGym.id,gymName:G.selGym.name,name:nm,phone:ph,subType:G.subType,status:'pending',created:new Date().toISOString()});await rtdb.ref('newRequests/'+G.selGym.id).set({time:Date.now()});if(G.subType==='yearly'){await db.collection('gyms').doc(G.selGym.id).update({verified:true});}closeModal('gymModal');T('<i class="fas fa-check-circle"></i> تم إرسال الطلب');}
 
 // ==================== COACH ====================
 async function checkCode(){const code=document.getElementById('redeemCode').value.trim().toUpperCase();if(code===ADMIN_CODE){openModal('passcodeModal');return;}const snap=await db.collection('gyms').where('redeemCode','==',code).get();if(snap.empty){T('الكود غير صحيح','error');return;}const doc=snap.docs[0];G.gym={id:doc.id,...doc.data()};G.gid=doc.id;if(!G.gym.active||exp(G.gym.subEnd)){T('الجيم غير مفعل أو الاشتراك منتهي','error');return;}const r=daysR(G.gym.subEnd);if(r<=3&&r>0){T('<i class="fas fa-exclamation-triangle"></i> متبقي '+r+' '+getDayLabel(r)+' على انتهاء اشتراك الجيم','warning');}localStorage.setItem('coachId',G.gid);document.getElementById('coachTitle').textContent=G.gym.name;document.getElementById('redeemCode').value='';goTo('coach');loadGymForm();renderPhones();renderImages();loadReqCount();if(reqListener)rtdb.ref('newRequests/'+G.gid).off('value',reqListener);reqListener=function(snap){if(snap.val()){T('طلب جديد!','warning');loadReqCount();rtdb.ref('newRequests/'+G.gid).remove();}};rtdb.ref('newRequests/'+G.gid).on('value',reqListener);}
@@ -696,6 +546,8 @@ async function loadReqCount(){const snap=await db.collection('requests').where('
 async function loadRequests(){const snap=await db.collection('requests').where('gymId','==',G.gid).where('status','==','pending').get();const reqs=[];snap.forEach(function(doc){reqs.push({id:doc.id,...doc.data()});});const c=document.getElementById('requestsList');if(!reqs.length){c.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><h4>لا طلبات معلقة</h4></div>';return;}c.innerHTML=reqs.map(function(r){return '<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;"><div><strong>'+r.name+'</strong></div><div style="font-size:11px;">'+r.phone+' | '+(r.subType==='monthly'?'شهري':'سنوي')+'</div><div style="display:flex;gap:4px;margin-top:6px;"><button class="btn btn-success btn-sm" onclick="accReq(\''+r.id+'\')"><i class="fas fa-check"></i> قبول</button><button class="btn btn-danger btn-sm" onclick="rejReq(\''+r.id+'\')"><i class="fas fa-times"></i> رفض</button></div></div>';}).join('');}
 async function accReq(rid){const reqSnap=await db.collection('requests').doc(rid).get();const req=reqSnap.data();const dupMem=await db.collection('members').where('gymId','==',G.gid).where('phone','==',req.phone).where('active','==',true).where('leftByUser','==',false).get();if(!dupMem.empty){T('هذا الرقم موجود بالفعل كمشترك نشط','error');return;}const sd=new Date();const dd=new Date(sd);req.subType==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365);await db.collection('members').add({gymId:G.gid,gymName:G.gym.name,name:req.name,phone:req.phone,type:req.subType,start:sd.toISOString(),due:dd.toISOString(),monthlyPrice:G.gym.monthlyPrice,yearlyPrice:G.gym.yearlyPrice,paid:true,active:true,leftByUser:false,created:new Date().toISOString()});await db.collection('requests').doc(rid).update({status:'accepted'});loadRequests();loadReqCount();T('تم قبول الطلب');}
 async function rejReq(rid){showConfirm('رفض','<p>متأكد من رفض الطلب؟</p>',async function(){await db.collection('requests').doc(rid).update({status:'rejected'});loadRequests();loadReqCount();T('تم الرفض');});}
+
+// ==================== MEMBERS ====================
 async function loadMembers(){const snap=await db.collection('members').where('gymId','==',G.gid).where('active','==',true).where('leftByUser','==',false).get();const ms=[];snap.forEach(function(doc){ms.push({id:doc.id,...doc.data()});});const s=(document.getElementById('memberSearchInput')?.value||'').toLowerCase();let f=ms;if(s)f=ms.filter(function(m){return(m.name||'').toLowerCase().includes(s)||(m.phone||'').includes(s);});const c=document.getElementById('membersList');if(!f.length){c.innerHTML='<div class="empty"><i class="fas fa-users"></i><h4>لا مشتركين</h4></div>';return;}c.innerHTML='<div class="members-table"><div class="members-table-header"><span>الاسم</span><span>النوع</span><span>الاستحقاق</span><span>الحالة</span></div>'+f.map(function(m){const ok=m.paid&&!exp(m.due);return '<div class="members-table-row" onclick="memAct(\''+m.id+'\')"><span style="font-weight:600;">'+(m.name||'بدون اسم')+'</span><span style="font-size:10px;">'+(m.type==='monthly'?'شهري':'سنوي')+'</span><span style="font-size:10px;">'+fmt(m.due)+'</span><span><span class="status-badge '+(ok?'status-paid':'status-unpaid')+'">'+(ok?'<i class="fas fa-check-circle"></i> مدفوع':'<i class="fas fa-clock"></i> متأخر')+'</span></span></div>';}).join('')+'</div>';}
 async function memAct(mid){const snap=await db.collection('members').doc(mid).get();const m=snap.data();G.curMem={id:snap.id,...m};const ok=m.paid&&!exp(m.due);const canRenew=!m.paid||exp(m.due);document.getElementById('modalTitle').textContent=m.name||'مشترك';document.getElementById('modalBody').innerHTML='<div style="text-align:center;"><i class="fas fa-user-circle" style="font-size:40px;color:var(--primary);"></i><h3>'+(m.name||'بدون اسم')+'</h3><p><i class="fas fa-phone"></i> '+(m.phone||'لا يوجد')+'</p><div style="background:var(--light);border-radius:8px;padding:10px;text-align:right;"><div><span>النوع:</span> <strong>'+(m.type==='monthly'?'شهري':'سنوي')+'</strong></div><div><span>الاستحقاق:</span> <strong>'+fmt(m.due)+'</strong></div><span class="status-badge '+(ok?'status-paid':'status-unpaid')+'" style="font-size:12px;">'+(ok?'<i class="fas fa-check-circle"></i> مدفوع':'<i class="fas fa-clock"></i> يحتاج تجديد')+'</span></div></div>';let ft='';if(canRenew){ft+='<button class="btn btn-success" onclick="renewMem()"><i class="fas fa-sync-alt"></i> تجديد الاشتراك</button>';}else{ft+='<div style="padding:8px;background:#D4EDDA;border-radius:8px;text-align:center;font-size:12px;color:#155724;margin-bottom:4px;"><i class="fas fa-check-circle"></i> الاشتراك ساري</div>';}ft+='<button class="btn btn-outline btn-sm" onclick="showEditMember(\''+G.curMem.id+'\')"><i class="fas fa-edit"></i> تعديل الاسم والرقم</button>';ft+='<button class="btn btn-danger btn-sm" onclick="expelMem()"><i class="fas fa-user-slash"></i> طرد</button>';ft+='<button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إغلاق</button>';document.getElementById('modalFooter').innerHTML=ft;openModal('gymModal');}
 async function showEditMember(mid){const snap=await db.collection('members').doc(mid).get();const m=snap.data();document.getElementById('modalTitle').textContent='تعديل البيانات';document.getElementById('modalBody').innerHTML='<div class="form-group"><label>الاسم</label><input type="text" id="editMemName" class="form-control" value="'+(m.name||'')+'"></div><div class="form-group"><label>الهاتف</label><input type="tel" id="editMemPhone" class="form-control" value="'+(m.phone||'')+'"></div>';document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="saveEditMember(\''+mid+'\')"><i class="fas fa-save"></i> حفظ</button><button class="btn btn-outline" onclick="memAct(\''+mid+'\')">رجوع</button>';}
@@ -706,13 +558,19 @@ async function confirmRenew(){const dd=new Date();G.subType==='monthly'?dd.setDa
 async function expelMem(){const m=G.curMem;showConfirm('طرد المشترك','<p>هل أنت متأكد من طرد <strong>'+(m.name||'بدون اسم')+'</strong>؟</p><p style="color:var(--danger);font-size:12px;"><i class="fas fa-exclamation-triangle"></i> سيتم احتسابها كرفض للمشترك</p>',async function(){await db.collection('members').doc(m.id).update({active:false,leftByUser:false,expelledByCoach:true,expelledAt:new Date().toISOString(),paid:false});await db.collection('requests').add({gymId:G.gid,gymName:G.gym.name,name:m.name||'',phone:m.phone||'',subType:m.type||'monthly',status:'rejected',reason:'expelled',created:new Date().toISOString()});closeModal('gymModal');loadMembers();T('تم الطرد','warning');});}
 async function showAddMember(){document.getElementById('modalTitle').textContent='إضافة مشترك';document.getElementById('modalBody').innerHTML='<div class="form-group"><label>الاسم</label><input type="text" id="addMemName" class="form-control"></div><div class="form-group"><label>الهاتف</label><input type="tel" id="addMemPhone" class="form-control"></div><div class="form-group"><label>النوع</label><select id="addMemType" class="form-control"><option value="monthly">شهري (30 يوم)</option><option value="yearly">سنوي (365 يوم)</option></select></div><div class="form-group"><label>تاريخ الدفع</label><input type="date" id="addMemDate" class="form-control"></div>';document.getElementById('modalFooter').innerHTML='<button class="btn btn-success" onclick="addMem()"><i class="fas fa-plus"></i> إضافة</button><button class="btn btn-outline" onclick="closeModal(\'gymModal\')">إلغاء</button>';document.getElementById('addMemDate').value=new Date().toISOString().split('T')[0];openModal('gymModal');}
 async function addMem(){const n=document.getElementById('addMemName').value.trim(),p=document.getElementById('addMemPhone').value.trim(),t=document.getElementById('addMemType').value,d=document.getElementById('addMemDate').value;if(!n||!p){T('اكتب البيانات كاملة','error');return;}const dupSnap=await db.collection('members').where('gymId','==',G.gid).where('phone','==',p).where('active','==',true).where('leftByUser','==',false).get();if(!dupSnap.empty){T('هذا الرقم موجود بالفعل كمشترك نشط','error');return;}const sd=new Date(d);const dd=new Date(sd);t==='monthly'?dd.setDate(dd.getDate()+30):dd.setDate(dd.getDate()+365);await db.collection('members').add({gymId:G.gid,gymName:G.gym.name,name:n,phone:p,type:t,start:sd.toISOString(),due:dd.toISOString(),monthlyPrice:G.gym.monthlyPrice,yearlyPrice:G.gym.yearlyPrice,paid:true,active:true,leftByUser:false,isManual:true,created:new Date().toISOString()});closeModal('gymModal');loadMembers();T('<i class="fas fa-check-circle"></i> تمت إضافة المشترك بنجاح');}
+
+// ==================== SESSIONS ====================
 function getSessions(){try{return JSON.parse(localStorage.getItem('gymawy_sessions')||'[]');}catch(e){return[];}}
 function saveSessions(ss){localStorage.setItem('gymawy_sessions',JSON.stringify(ss));}
 function loadSessions(){const date=document.getElementById('sessionDate').value||new Date().toISOString().split('T')[0];const ss=getSessions().filter(function(s){return s.gymId===G.gid&&s.date===date;});const total=ss.reduce(function(a,s){return a+s.price;},0);document.getElementById('sessCount').textContent=ss.length;document.getElementById('sessTotal').textContent=total+' ج.م';const c=document.getElementById('sessionsList');if(!ss.length){c.innerHTML='<div class="empty"><i class="fas fa-calendar"></i><h4>لا حصص</h4></div>';return;}c.innerHTML=ss.map(function(s){return '<div style="background:var(--card);border-radius:8px;padding:8px;margin-bottom:4px;display:flex;justify-content:space-between;"><span>'+s.name+'</span><span>'+s.price+' ج.م</span></div>';}).join('');}
 function showAddSession(){document.getElementById('modalTitle').textContent='حصة جديدة';document.getElementById('modalBody').innerHTML='<div class="form-group"><input type="text" id="sessName" class="form-control" placeholder="اسم المتدرب"></div><div class="form-group"><input type="number" id="sessPrice" class="form-control" value="'+(G.gym.sessionPrice||0)+'"></div>';document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="addSess()">تسجيل</button>';openModal('gymModal');}
 function addSess(){const n=document.getElementById('sessName').value.trim(),p=+document.getElementById('sessPrice').value;if(!n){T('اكتب الاسم','error');return;}const ss=getSessions();ss.push({id:uid(),gymId:G.gid,name:n,price:p,date:new Date().toISOString().split('T')[0],created:new Date().toISOString()});saveSessions(ss);closeModal('gymModal');loadSessions();T('تم التسجيل');}
-async function loadStats(){const c=document.getElementById('statsContent');const mSnap=await db.collection('members').where('gymId','==',G.gid).where('active','==',true).where('leftByUser','==',false).get();const totalMembers=mSnap.size;const now=new Date();const thisMonth=new Date(now.getFullYear(),now.getMonth(),1);let newThisMonth=0,monthlyRevenue=0;mSnap.forEach(function(doc){const d=doc.data();if(d.start&&new Date(d.start)>=thisMonth)newThisMonth++;if(d.type==='monthly')monthlyRevenue+=d.monthlyPrice||0;else monthlyRevenue+=(d.yearlyPrice||0)/12;});const ratingSnap=await db.collection('ratings').where('gymId','==',G.gid).get();const ratingCount=ratingSnap.size;const sess=getSessions().filter(function(s){return s.gymId===G.gid;});const sessThisMonth=sess.filter(function(s){return s.date>=new Date().toISOString().split('T')[0].substring(0,7);});const sessRevenue=sessThisMonth.reduce(function(a,s){return a+s.price;},0);c.innerHTML='<div class="stat-grid"><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--primary);">'+totalMembers+'</div><div>مشترك نشط</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--success);">'+newThisMonth+'</div><div>جديد هذا الشهر</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--primary);">'+Math.round(monthlyRevenue)+'</div><div>إيراد شهري (ج.م)</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--success);">'+sessRevenue+'</div><div>حصص الشهر (ج.م)</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--primary);">'+ratingCount+'</div><div>تقييم</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--success);">'+sessThisMonth.length+'</div><div>حصص مسجلة</div></div></div>';}
+
+// ==================== STATS ====================
+async function loadStats(){const c=document.getElementById('statsContent');const mSnap=await db.collection('members').where('gymId','==',G.gid).where('active','==',true).where('leftByUser','==',false).get();const totalMembers=mSnap.size;const now=new Date();const thisMonth=new Date(now.getFullYear(),now.getMonth(),1);let newThisMonth=0,monthlyRevenue=0;mSnap.forEach(function(doc){const d=doc.data();if(d.start&&new Date(d.start)>=thisMonth)newThisMonth++;if(d.type==='monthly')monthlyRevenue+=d.monthlyPrice||0;else monthlyRevenue+=(d.yearlyPrice||0)/12;});const ratingSnap=await db.collection('ratings').where('gymId','==',G.gid).get();const ratingCount=ratingSnap.size;const sess=getSessions().filter(function(s){return s.gymId===G.gid;});const sessThisMonth=sess.filter(function(s){return s.date>=new Date().toISOString().split('T')[0].substring(0,7);});const sessRevenue=sessThisMonth.reduce(function(a,s){return a+s.price;},0);c.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--primary);">'+totalMembers+'</div><div>مشترك نشط</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--success);">'+newThisMonth+'</div><div>جديد هذا الشهر</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--primary);">'+Math.round(monthlyRevenue)+'</div><div>إيراد شهري (ج.م)</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--success);">'+sessRevenue+'</div><div>حصص الشهر (ج.م)</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--primary);">'+ratingCount+'</div><div>تقييم</div></div><div class="form-card" style="text-align:center;"><div style="font-size:28px;font-weight:800;color:var(--success);">'+sessThisMonth.length+'</div><div>حصص مسجلة</div></div></div>';}
 function logoutCoach(){if(reqListener&&G.gid){rtdb.ref('newRequests/'+G.gid).off('value',reqListener);reqListener=null;}localStorage.removeItem('coachId');goTo('home');}
+
+// ==================== ADMIN ====================
 async function loadAdmin(){const snap=await db.collection('gyms').get();const gs=[];snap.forEach(function(doc){gs.push({id:doc.id,...doc.data()});});const total=gs.length,act=gs.filter(function(g){return g.active&&!exp(g.subEnd);}).length,expiring=gs.filter(function(g){return g.active&&g.subEnd&&daysR(g.subEnd)<=3&&daysR(g.subEnd)>0;}).length;document.getElementById('adminContent').innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;"><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--primary);">'+total+'</div><div>جيم</div></div><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--success);">'+act+'</div><div>نشط</div></div><div class="form-card" style="text-align:center;"><div style="font-size:22px;font-weight:800;color:'+(expiring>0?'var(--danger)':'var(--gray)')+';">'+expiring+'</div><div>قريب الانتهاء</div></div></div><div style="display:flex;justify-content:space-between;margin-bottom:10px;"><h3>الجيمات</h3><button class="btn btn-primary btn-sm" onclick="newGym()"><i class="fas fa-plus"></i> جيم</button></div>'+gs.map(function(g){const ok=g.active&&!exp(g.subEnd);const r=daysR(g.subEnd)||0;return '<div style="background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;box-shadow:var(--shadow);"><div style="display:flex;justify-content:space-between;"><strong>'+g.name+' '+(g.verified?'<span style="color:#F57F17;"><i class="fas fa-check-circle"></i> موثق</span>':'')+'</strong><span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+(ok?'#D4EDDA':'#F8D7DA')+';color:'+(ok?'#155724':'#721C24')+';">'+(ok?'نشط':'منتهي')+'</span></div><div style="color:var(--text-secondary);font-size:11px;margin:3px 0;"><i class="fas fa-key"></i> '+g.redeemCode+' | <i class="fas fa-hourglass-half"></i> '+r+' يوم</div><div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="btn btn-success btn-sm" onclick="renGym(\''+g.id+'\')"><i class="fas fa-redo"></i> تجديد</button><button class="btn '+(g.active?'btn-danger':'btn-success')+' btn-sm" onclick="togGym(\''+g.id+'\')">'+(g.active?'<i class="fas fa-pause"></i> تعطيل':'<i class="fas fa-play"></i> تفعيل')+'</button><button class="btn btn-outline btn-sm" onclick="toggleVerify(\''+g.id+'\','+(g.verified||false)+')">'+(g.verified?'<i class="fas fa-times"></i> إلغاء التوثيق':'<i class="fas fa-check"></i> توثيق')+'</button><button class="btn btn-outline btn-sm" onclick="editGymDays(\''+g.id+'\','+r+')"><i class="fas fa-calendar"></i> تعديل الأيام</button><button class="btn btn-outline btn-sm" onclick="editRedeemCode(\''+g.id+'\',\''+g.redeemCode+'\')"><i class="fas fa-key"></i> الكود</button><button class="btn btn-danger btn-sm" onclick="deleteGym(\''+g.id+'\',\''+g.name+'\')"><i class="fas fa-trash"></i> حذف</button></div></div>';}).join('');}
 async function toggleVerify(gid,cur){await db.collection('gyms').doc(gid).update({verified:!cur});loadAdmin();T(cur?'تم إلغاء التوثيق':'تم التوثيق');}
 function editGymDays(gid,cd){document.getElementById('modalTitle').textContent='تعديل الأيام';document.getElementById('modalBody').innerHTML='<div class="form-group"><label>الأيام المتبقية حالياً: '+cd+' يوم</label></div><div class="form-group"><label>عدد الأيام الجديد</label><input type="number" id="newDays" class="form-control" placeholder="أيام جديدة" min="1"></div><div class="form-group"><label>أو بونص (أقل من 30 يوم)</label><input type="number" id="bonusDays" class="form-control" placeholder="1-29" min="1" max="29"></div><p style="font-size:10px;color:var(--danger);">ملاحظة: البونص يتحول تلقائياً إلى 29 لو كتبت 30 أو أكثر</p>';document.getElementById('modalFooter').innerHTML='<button class="btn btn-primary" onclick="saveGymDays(\''+gid+'\')"><i class="fas fa-save"></i> حفظ</button>';openModal('gymModal');}
@@ -729,17 +587,13 @@ function logoutAdmin(){localStorage.removeItem('admin');goTo('home');}
 
 // ==================== INIT ====================
 (function(){
-  if(localStorage.getItem('darkMode')==='1'){document.body.classList.add('dark');}
-  
+  if(localStorage.getItem('darkMode')==='1'){document.body.classList.add('dark');const icon = document.querySelector('.theme-icon'); if(icon) icon.className = 'fas fa-sun theme-icon';}
   const userAuth = localStorage.getItem('userAuth');
   if(userAuth){ try { G.currentUser = JSON.parse(userAuth); } catch(e) { G.currentUser = null; } }
-  
   const admin = localStorage.getItem('admin');
   if(admin==='1'){ if(!G.currentUser) G.currentUser={fullName:'Admin',username:'ADMIN',phone:''}; goTo('admin'); loadAdmin(); return; }
-  
   const coachId = localStorage.getItem('coachId');
   if(coachId){ db.collection('gyms').doc(coachId).get().then(function(snap){ if(snap.exists&&snap.data().active){ G.gym={id:snap.id,...snap.data()}; G.gid=snap.id; if(!G.currentUser) G.currentUser={fullName:'Coach',username:'COACH',phone:''}; document.getElementById('coachTitle').textContent=G.gym.name; goTo('coach'); loadGymForm(); renderPhones(); renderImages(); loadReqCount(); const r=daysR(G.gym.subEnd); if(r<=3&&r>0){ setTimeout(function(){ T('<i class="fas fa-exclamation-triangle"></i> متبقي '+r+' '+getDayLabel(r)+' على انتهاء اشتراك الجيم','warning'); },500); } } else { localStorage.removeItem('coachId'); goTo('home'); } }); return; }
-  
   goTo('home');
 })();
 </script>
