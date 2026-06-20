@@ -4,22 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#6C5CE7">
-    <link rel="manifest" href="manifest.json">
-    <title>Gymawy</title>
+    <link rel="manifest" href="Manifest.json">
+    <title>Gymawy - منصة الجيم الذكية</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/1.css">
+    <link rel="stylesheet" href="Style.css">
 </head>
 <body>
     <div id="app"></div>
-    <script src="js/1.js"></script>
-    <script src="js/2.js"></script>
-    <script src="js/3.js"></script>
-    <script src="js/4.js"></script>
-    <script src="js/5.js"></script>
-    <script src="js/6.js"></script>
-    <script src="js/7.js"></script>
-    <script src="js/8.js"></script>
-    <script src="js/9.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+    
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/index.min.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="Js1.js"></script>
+    <script src="Js2.js"></script>
+    <script src="Js3.js"></script>
+    <script src="Js4.js"></script>
+    <script src="Js5.js"></script>
+    <script src="Js6.js"></script>
+    <script src="Js7.js"></script>
+    <script src="Js8.js"></script>
+    <script src="Js9.js"></script>
+    
+    <!-- Service Worker -->
+    <script>
+        if('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('Sw.js').catch(function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        }
+    </script>
 </body>
 </html>
